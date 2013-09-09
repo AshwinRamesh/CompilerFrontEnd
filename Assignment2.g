@@ -2,9 +2,10 @@ grammar Assignment2;
 @parser::header
 {
     import java.util.HashMap;
+    import java.util.ArrayList;
 }
 
-program : functions;
+program locals [ArrayList<String> functionNames = new ArrayList<String>();] : functions;
 
 functions : function functions
     | ;
@@ -15,7 +16,17 @@ locals
 [
     HashMap<String,Integer> symbols = new HashMap<String,Integer>()
 ]
-: 'FUNCTION' ID arguments[true] variables block;
+: 'FUNCTION' ID arguments[true] variables block
+{
+    //if the function name has been seen already
+    if ($program::functionNames.contains($ID.text)) {
+        //TODO: exception?
+    }
+    else {
+        $program::functionNames.add($ID.text);
+    }
+}
+;
 
 /*
     isDeclaring: is this a declaration of arguments, or actually passing vars?
