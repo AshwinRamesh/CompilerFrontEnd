@@ -20,7 +20,7 @@ locals
 {
     //if the function name has been seen already
     if ($program::functionNames.contains($ID.text)) {
-        //TODO: exception?
+        throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
     }
     else {
         $program::functionNames.add($ID.text);
@@ -49,13 +49,11 @@ id_list[boolean checkOnly]
 {
     if ($checkOnly) {
         if ($function::symbols.get($ID.text) == null) {
-            System.err.println("Error: variable '"+$ID.text+"' undefined.");
-	    // TODO: exception?
+            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
         }
     }
     else if ($function::symbols.get($ID.text) != null) {
-        System.err.println("Error: variable '"+$ID.text+"' redefined.");
-        // TODO: exception?
+        throw new RuntimeException("Error: variable '"+$ID.text+"' redefined.");
     }
     else {
         $function::symbols.put($ID.text, 0);
