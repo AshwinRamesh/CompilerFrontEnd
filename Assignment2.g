@@ -5,7 +5,11 @@ grammar Assignment2;
     import java.util.ArrayList;
 }
 
-program locals [ArrayList<String> functionNames = new ArrayList<String>();] : functions;
+program locals
+[
+    ArrayList<String> functionNames = new ArrayList<String>();
+]
+: functions;
 
 functions : function functions
     | ;
@@ -45,7 +49,7 @@ variables : 'VARS' id_list[false] ';'
    Done when in expression: ID arguments;
 */
 id_list[boolean checkOnly]
-    : ID (',' id_list[$checkOnly])?
+: ID (',' id_list[$checkOnly])?
 {
     if ($checkOnly) {
         if ($function::symbols.get($ID.text) == null) {
@@ -59,7 +63,7 @@ id_list[boolean checkOnly]
         $function::symbols.put($ID.text, 0);
     }
 }
-    ;
+;
 
 block : 'BEGIN' statements 'END' ;
 
