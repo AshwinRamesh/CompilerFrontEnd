@@ -1,3 +1,9 @@
+//TODO: Find some way to keep track of the number of registers we have so far.
+//Ideas: HashMap of register to value, and the length of the HashMap is the number of registers
+//Potential problem: Can we lose a register? Can we ever have r1 r2 r3 r5 ?
+
+//TODO: Decide when to start a 'basic block'. On branch? On return? Both?
+
 grammar Assignment2;
 @parser::header
 {
@@ -29,6 +35,11 @@ function
     ]
     : 'FUNCTION' ID arguments[true] variables block
     {
+        //Generate:
+        ( $ID.next (" ".join(arguments))
+        ( 0
+        ...<arbitrary> )
+
         //if the function name has been seen already
         if ($program::functionNames.contains($ID.text)) {
             throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
@@ -72,6 +83,7 @@ id_list[boolean checkOnly] returns [List<Token> return_ids]
                 throw new RuntimeException("Error: variable '"+id.text+"' redefined.");
             }
             else {
+                //Initialize new variables to 0
                 $function::symbols.put(id.text, 0);
             }
 
@@ -87,11 +99,14 @@ statements : statement ';' statements
 statement 
     : ID '=' expression
     {
+        //TODO Generate something like
+        //(ld r<number> expression.value())
+        //(st ID r<number>)
         if ($function::symbols.get($ID.text) == null) {
             System.out.println($function::symbols.toString());
             throw new RuntimeException("Error: variable '"+$ID.text+"' undefined. MAXSWAG");
-	}
-	$function::symbols.put($ID.text, $expression.value);
+	    }
+        $function::symbols.put($ID.text, $expression.value);
     }
     | 'IF' ID 'THEN' block ('ELSE' block)?
     {
@@ -101,6 +116,10 @@ statement
     }
     | 'RETURN' ID
     {
+        //TODO Generate something like:
+        //(ld r<number> ID)
+        //(ret r<number>)
+
     	if ($function::symbols.get($ID.text) == null) {
             throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
         }
@@ -111,21 +130,24 @@ expression returns [int value]
     : NUM
     {
         $expression.value = $NUM.int;
+        //generate
+        //(ld rx $expression.value)
     }
     | ID
     {
+        //generate:
+        //(ld rx v)
         Integer v = $function::symbols.get($ID.text);
-	if (v == null) {
-
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
-	}
-    $expression.value = v;
+        if (v == null) {
+                throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+        }
+        $expression.value = v;
     }
     | ID arguments[false]
     {
+        
         System.out.println($program::functionNames.toString());
         if (!$program::functionNames.contains($ID.text)) {
-
 	    System.err.println("Error: function '"+$ID.text+"' undefined.");
 	}
 	// TODO: check number of arguments match function definition
