@@ -44,7 +44,7 @@ function
     This is sent to id_list to tell it whether we need to check only [passing]
     or insert these symbols to the function table [declaring].
  */
-arguments[boolean isDeclaring] : '(' id_list[!$isDeclaring] ')'
+arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')'
     | '()';
 
 variables : 'VARS' id_list[false] ';'
@@ -55,19 +55,26 @@ variables : 'VARS' id_list[false] ';'
    That is, we don't want to set its value to anything.
    Done when in expression: ID arguments;
 */
-id_list[boolean checkOnly]
-    : ID (',' id_list[$checkOnly])?
+id_list[boolean checkOnly] returns [List<Token> return_ids]
+    : ids+=ID (',' ids+=ID)*
     {
-        if ($checkOnly) {
-            if ($function::symbols.get($ID.text) == null) {
-                throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+        $return_ids = $ids; //YEAH OKAY
+
+        for(Token id : $ids) {
+
+            if ($checkOnly) {
+                if ($function::symbols.get(id.text) == null) {
+
+                    throw new RuntimeException("Error: variable '"+id.text+"' undefined.");
+                }
             }
-        }
-        else if ($function::symbols.get($ID.text) != null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' redefined.");
-        }
-        else {
-            $function::symbols.put($ID.text, 0);
+            else if ($function::symbols.get(id.text) != null) {
+                throw new RuntimeException("Error: variable '"+id.text+"' redefined.");
+            }
+            else {
+                $function::symbols.put(id.text, 0);
+            }
+
         }
     }
     ;
@@ -81,7 +88,8 @@ statement
     : ID '=' expression
     {
         if ($function::symbols.get($ID.text) == null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+            System.out.println($function::symbols.toString());
+            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined. MAXSWAG");
 	}
 	$function::symbols.put($ID.text, $expression.value);
     }
@@ -107,15 +115,17 @@ expression returns [int value]
     | ID
     {
         Integer v = $function::symbols.get($ID.text);
-	if (v == null) {	    
+	if (v == null) {
+
             throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
 	}
-	$expression.value = v;
+    $expression.value = v;
     }
     | ID arguments[false]
     {
         System.out.println($program::functionNames.toString());
         if (!$program::functionNames.contains($ID.text)) {
+
 	    System.err.println("Error: function '"+$ID.text+"' undefined.");
 	}
 	// TODO: check number of arguments match function definition
@@ -143,7 +153,7 @@ expression returns [int value]
 	    $expression.value = ($left.value>$right.value) ? 1 : 0;
 	}
 	if ($OP.text.equals("==")) {
-	    $expression.value = ($left.value==$right.value) ? 1 : 0;
+	    $expression.value = ($left.value==$right.value) ? 1 : 0; //YEAH OKAY
 	}
     }
     ;
