@@ -2,7 +2,10 @@
 //Ideas: HashMap of register to value, and the length of the HashMap is the number of registers
 //Potential problem: Can we lose a register? Can we ever have r1 r2 r3 r5 ?
 
-//TODO: Decide when to start a 'basic block'. On branch? On return? Both?
+//TODO: Decide when to start a 'basic block'. On branch? On return? Both? // On BEGIN seems like a good idea.
+//But you need to look at everything between the BEGIN and END before you start generating code, since you need to know basic block numbers.
+//Each FUNCTION has 1 or more basic blocks, not each program.
+//TODO: Deal with the ambiguous IF ID THEN IF ID THEN BLOCK ELSE BLOCK //which if does the else go to? 
 
 grammar Assignment2;
 @parser::header
@@ -10,6 +13,7 @@ grammar Assignment2;
     import java.util.HashMap;
     import java.util.ArrayList;
 }
+
 
 program
     locals
@@ -22,7 +26,7 @@ program
 	    throw new RuntimeException("Error: No main function defined.");
 	}
     }
-    : functions;
+    : functions; //generate ( + functions + )
 
 functions : function functions
     | ;
@@ -36,9 +40,9 @@ function
     : 'FUNCTION' ID arguments[true] variables block
     {
         //Generate:
-        ( $ID.next (" ".join(arguments))
-        ( 0
-        ...<arbitrary> )
+        //( $ID.text (" ".join(arguments))
+        //( 0
+        //...<arbitrary> )
 
         //if the function name has been seen already
         if ($program::functionNames.contains($ID.text)) {
@@ -86,7 +90,6 @@ id_list[boolean checkOnly] returns [List<Token> return_ids]
                 //Initialize new variables to 0
                 $function::symbols.put(id.text, 0);
             }
-
         }
     }
     ;
@@ -100,7 +103,7 @@ statement
     : ID '=' expression
     {
         //TODO Generate something like
-        //(ld r<number> expression.value())
+        //<get register number that expression stored the result in>
         //(st ID r<number>)
         if ($function::symbols.get($ID.text) == null) {
             System.out.println($function::symbols.toString());
@@ -143,6 +146,7 @@ expression returns [int value]
         }
         $expression.value = v;
     }
+    //Function application
     | ID arguments[false]
     {
         
@@ -156,6 +160,12 @@ expression returns [int value]
     }
     | '(' left=expression OP right=expression ')'
     {
+
+        //For each of these, generate:
+        //(ld ra $left.value)
+        //(ld rb $right.value)
+        //(add/sub/mul/div/[le]/gt/cmp rx ra rb)
+        // rx now has the result of the expression
     	if ($OP.text.equals("+")) {
 	    $expression.value = $left.value+$right.value;
 	}
@@ -175,7 +185,7 @@ expression returns [int value]
 	    $expression.value = ($left.value>$right.value) ? 1 : 0;
 	}
 	if ($OP.text.equals("==")) {
-	    $expression.value = ($left.value==$right.value) ? 1 : 0; //YEAH OKAY
+	    $expression.value = ($left.value==$right.value) ? 1 : 0; 
 	}
     }
     ;
