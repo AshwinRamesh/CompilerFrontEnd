@@ -27,9 +27,8 @@ function
     [
         HashMap<String,Integer> symbols = new HashMap<String,Integer>()
     ]
-    : 'FUNCTION' ID arguments[true] variables block
+    : 'FUNCTION' ID
     {
-    	// Set the name of our function
         //if the function name has been seen already
         if ($program::functionNames.contains($ID.text)) {
             throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
@@ -37,7 +36,7 @@ function
         else {
             $program::functionNames.add($ID.text);
         }
-    }
+    } arguments[true] variables block
     ;
 
 /*
@@ -122,7 +121,7 @@ expression returns [int value]
     | ID arguments[false]
     {
         if (!$program::functionNames.contains($ID.text)) {
-	    System.err.println("Error: function '"+$ID.text+"' undefined.");
+	    throw new RuntimeException("Error: function '"+$ID.text+"' undefined.");
 	}
 	// TODO: check number of arguments match function definition
 	// TODO: compute value by calling the function (HOW??)
