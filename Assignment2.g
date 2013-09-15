@@ -23,12 +23,13 @@ functions : function functions
 
 function
     /* symbols defined in this function */
-    locals
+    locals 
     [
         HashMap<String,Integer> symbols = new HashMap<String,Integer>()
     ]
     : 'FUNCTION' ID arguments[true] variables block
     {
+    	// Set the name of our function
         //if the function name has been seen already
         if ($program::functionNames.contains($ID.text)) {
             throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
@@ -55,19 +56,25 @@ variables : 'VARS' id_list[false] ';'
    That is, we don't want to set its value to anything.
    Done when in expression: ID arguments;
 */
-id_list[boolean checkOnly]
-    : ID (',' id_list[$checkOnly])?
+id_list[boolean checkOnly] returns [List<Token> return_ids]
+    : ids+=ID (',' ids+=ID)*
     {
-        if ($checkOnly) {
-            if ($function::symbols.get($ID.text) == null) {
-                throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+        $return_ids = $ids; //YEAH OKAY
+
+        for(Token id : $ids) {
+            String idText = id.getText();
+            if ($checkOnly) {
+                if ($function::symbols.get(idText) == null) {
+
+                    throw new RuntimeException("Error: variable '"+idText+"' undefined.");
+                }
             }
-        }
-        else if ($function::symbols.get($ID.text) != null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' redefined.");
-        }
-        else {
-            $function::symbols.put($ID.text, 0);
+            else if ($function::symbols.get(idText) != null) {
+                throw new RuntimeException("Error: variable '"+idText+"' redefined.");
+            }
+            else {
+                $function::symbols.put(idText, 0);
+            }
         }
     }
     ;
@@ -107,14 +114,13 @@ expression returns [int value]
     | ID
     {
         Integer v = $function::symbols.get($ID.text);
-	if (v == null) {	    
+	if (v == null) {
             throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
 	}
 	$expression.value = v;
     }
     | ID arguments[false]
     {
-        System.out.println($program::functionNames.toString());
         if (!$program::functionNames.contains($ID.text)) {
 	    System.err.println("Error: function '"+$ID.text+"' undefined.");
 	}
