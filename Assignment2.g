@@ -8,7 +8,8 @@ grammar Assignment2;
 program
     locals
     [
-        ArrayList<String> functionNames = new ArrayList<String>()
+        ArrayList<String> functionNames = new ArrayList<String>(),
+        HashMap<String, Integer> numArguments = new HashMap<String, Integer>()
     ]
     @after
     {
@@ -36,6 +37,8 @@ function
         else {
             $program::functionNames.add($ID.text);
         }
+
+        $program::numArguments.put($ID.text, $arguments.args.size());
     }
     ;
 
@@ -44,7 +47,9 @@ function
     This is sent to id_list to tell it whether we need to check only [passing]
     or insert these symbols to the function table [declaring].
  */
-arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')'
+arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')' {
+    $args = $id_list.return_ids;
+}
     | '()';
 
 variables : 'VARS' id_list[false] ';'
@@ -55,24 +60,26 @@ variables : 'VARS' id_list[false] ';'
    That is, we don't want to set its value to anything.
    Done when in expression: ID arguments;
 */
-id_list[boolean checkOnly] returns [List<Token> return_ids]
-    : ids+=ID (',' ids+=ID)*
+id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
+    @init {
+        $return_ids = new ArrayList<String>();
+    }
+    : a=ID {$return_ids.add($a.text);} (',' b=ID{$return_ids.add($b.text);})* //I have NO IDEA how to format this
     {
-        $return_ids = $ids; //YEAH OKAY
 
-        for(Token id : $ids) {
+        for(String id : $return_ids) {
 
             if ($checkOnly) {
-                if ($function::symbols.get(id.text) == null) {
+                if ($function::symbols.get(id) == null) {
 
-                    throw new RuntimeException("Error: variable '"+id.text+"' undefined.");
+                    throw new RuntimeException("Error: variable '"+id+"' undefined.");
                 }
             }
-            else if ($function::symbols.get(id.text) != null) {
-                throw new RuntimeException("Error: variable '"+id.text+"' redefined.");
+            else if ($function::symbols.get(id) != null) {
+                throw new RuntimeException("Error: variable '"+id+"' redefined.");
             }
             else {
-                $function::symbols.put(id.text, 0);
+                $function::symbols.put(id, 0);
             }
 
         }
@@ -125,9 +132,13 @@ expression returns [int value]
     {
         System.out.println($program::functionNames.toString());
         if (!$program::functionNames.contains($ID.text)) {
-
-	    System.err.println("Error: function '"+$ID.text+"' undefined.");
-	}
+            System.err.println("Error: function '"+$ID.text+"' undefined.");
+	    }
+	    //Can't test this until the above error triggers properly. Blocking on "function 'factorial' undefined error. Oops.
+	    else if ($program::numArguments.get($ID.text) != $arguments.args.size()) {
+            System.err.println("Error: function '"+$ID.text+"' expects "+$arguments.args.size() +" arguments.");
+        }
+	 
 	// TODO: check number of arguments match function definition
 	// TODO: compute value by calling the function (HOW??)
 
