@@ -37,7 +37,6 @@ function
         else {
             $program::functionNames.add($ID.text);
         }
-
         $program::numArguments.put($ID.text, $arguments.args.size());
     }
     ;
@@ -50,7 +49,10 @@ function
 arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')' {
     $args = $id_list.return_ids;
 }
-    | '()';
+    | '()' {
+        $args = new ArrayList<String>();
+    }
+    ;
 
 variables : 'VARS' id_list[false] ';'
     | ;
@@ -134,10 +136,11 @@ expression returns [int value]
         if (!$program::functionNames.contains($ID.text)) {
             System.err.println("Error: function '"+$ID.text+"' undefined.");
 	    }
-	    //Can't test this until the above error triggers properly. Blocking on "function 'factorial' undefined error. Oops.
-	    else if ($program::numArguments.get($ID.text) != $arguments.args.size()) {
-            System.err.println("Error: function '"+$ID.text+"' expects "+$arguments.args.size() +" arguments.");
+        
+	    if ($program::numArguments.get($ID.text) != $arguments.args.size()) {
+            System.err.println("Error: function '"+$ID.text+"' expects "+$program::numArguments.get($ID.text) +" arguments.");
         }
+
 	 
 	// TODO: check number of arguments match function definition
 	// TODO: compute value by calling the function (HOW??)
