@@ -46,7 +46,6 @@ def format_instruction(instructions):
     for instruction in instructions:
         new_instuction = []
         for param in instruction:
-            print param
             if type(param) == tuple:
                 new_instuction.append(param[0])
             else:
@@ -64,7 +63,6 @@ def format(parsed_exp):
             args.append(arg[0])
         blocks = {}
         for block in function[2:]:
-            print format_instruction(block[1])
             blocks[int(block[0])] = format_instruction(block[1:])
         parsed_list[function[0][0]] = {"args": args, "blocks": blocks}
     return parsed_list
