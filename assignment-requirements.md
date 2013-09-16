@@ -34,11 +34,16 @@ Instructions
 
 Task One
 --------
-- [ ] Define semantics- [ ] Parse program- [ ] Do semantic checks- [ ] Report errors
+- [ ] Define semantics
+- [ ] Parse program
+- [ ] Do semantic checks
+- [ ] Report errors
 
 Task Two
 --------
-- [ ] Create intermediate code in lisp syntax- [ ] Define basic blocks with non-negative numbers- [ ] Break complex expressions into individual instructions using registers
+- [ ] Create intermediate code in lisp syntax
+- [ ] Define basic blocks with non-negative numbers
+- [ ] Break complex expressions into individual instructions using registers
 
 Task Three
 ----------
