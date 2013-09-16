@@ -5,28 +5,39 @@ grammar Assignment2;
     import java.util.ArrayList;
 }
 
-program locals [ArrayList<String> functionNames = new ArrayList<String>();] : functions;
+program
+    locals
+    [
+        ArrayList<String> functionNames = new ArrayList<String>()
+    ]
+    @after
+    {
+        if (!$program::functionNames.contains("main")) {
+	    throw new RuntimeException("Error: No main function defined.");
+	}
+    }
+    : functions;
 
 functions : function functions
     | ;
 
 function
-/* symbols defined in this function */
-locals
-[
-    HashMap<String,Integer> symbols = new HashMap<String,Integer>()
-]
-: 'FUNCTION' ID arguments[true] variables block
-{
-    //if the function name has been seen already
-    if ($program::functionNames.contains($ID.text)) {
-        throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
-    }
-    else {
-        $program::functionNames.add($ID.text);
-    }
-}
-;
+    /* symbols defined in this function */
+    locals 
+    [
+        HashMap<String,Integer> symbols = new HashMap<String,Integer>()
+    ]
+    : 'FUNCTION' ID
+    {
+        //if the function name has been seen already
+        if ($program::functionNames.contains($ID.text)) {
+            throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
+        }
+        else {
+            $program::functionNames.add($ID.text);
+        }
+    } arguments[true] variables block
+    ;
 
 /*
     isDeclaring: is this a declaration of arguments, or actually passing vars?
@@ -44,21 +55,27 @@ variables : 'VARS' id_list[false] ';'
    That is, we don't want to set its value to anything.
    Done when in expression: ID arguments;
 */
-id_list[boolean checkOnly]
-    : ID (',' id_list[$checkOnly])?
-{
-    if ($checkOnly) {
-        if ($function::symbols.get($ID.text) == null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+id_list[boolean checkOnly] returns [List<Token> return_ids]
+    : ids+=ID (',' ids+=ID)*
+    {
+        $return_ids = $ids; //YEAH OKAY
+
+        for(Token id : $ids) {
+            String idText = id.getText();
+            if ($checkOnly) {
+                if ($function::symbols.get(idText) == null) {
+
+                    throw new RuntimeException("Error: variable '"+idText+"' undefined.");
+                }
+            }
+            else if ($function::symbols.get(idText) != null) {
+                throw new RuntimeException("Error: variable '"+idText+"' redefined.");
+            }
+            else {
+                $function::symbols.put(idText, 0);
+            }
         }
     }
-    else if ($function::symbols.get($ID.text) != null) {
-        throw new RuntimeException("Error: variable '"+$ID.text+"' redefined.");
-    }
-    else {
-        $function::symbols.put($ID.text, 0);
-    }
-}
     ;
 
 block : 'BEGIN' statements 'END' ;
@@ -66,14 +83,75 @@ block : 'BEGIN' statements 'END' ;
 statements : statement ';' statements
     | ;
 
-statement : ID '=' expression
+statement 
+    : ID '=' expression
+    {
+        if ($function::symbols.get($ID.text) == null) {
+            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+	}
+	$function::symbols.put($ID.text, $expression.value);
+    }
     | 'IF' ID 'THEN' block ('ELSE' block)?
-    | 'RETURN' ID;
+    {
+        if ($function::symbols.get($ID.text) == null) {
+            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+	}
+    }
+    | 'RETURN' ID
+    {
+    	if ($function::symbols.get($ID.text) == null) {
+            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+        }
+    }
+    ;
 
-expression : NUM
+expression returns [int value]
+    : NUM
+    {
+        $expression.value = $NUM.int;
+    }
     | ID
+    {
+        Integer v = $function::symbols.get($ID.text);
+	if (v == null) {
+            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+	}
+	$expression.value = v;
+    }
     | ID arguments[false]
-    | '(' expression OP expression ')';
+    {
+        if (!$program::functionNames.contains($ID.text)) {
+	    throw new RuntimeException("Error: function '"+$ID.text+"' undefined.");
+	}
+	// TODO: check number of arguments match function definition
+	// TODO: compute value by calling the function (HOW??)
+
+    }
+    | '(' left=expression OP right=expression ')'
+    {
+    	if ($OP.text.equals("+")) {
+	    $expression.value = $left.value+$right.value;
+	}
+	if ($OP.text.equals("-")) {
+            $expression.value = $left.value-$right.value;
+	}
+	if ($OP.text.equals("*")) {
+	    $expression.value = $left.value*$right.value;
+	}
+	if ($OP.text.equals("/")) {
+	    $expression.value = $left.value/$right.value;
+	}
+	if ($OP.text.equals("<")) {
+	    $expression.value = ($left.value<$right.value) ? 1 : 0;
+	}
+	if ($OP.text.equals(">")) {
+	    $expression.value = ($left.value>$right.value) ? 1 : 0;
+	}
+	if ($OP.text.equals("==")) {
+	    $expression.value = ($left.value==$right.value) ? 1 : 0;
+	}
+    }
+    ;
 
 
 WS : [ \t\r\n]+ -> skip;
