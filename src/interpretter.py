@@ -47,31 +47,42 @@ def load_instructions(environment, register, var):
     return environment
 
 
-def add(environment, register_one, register_two, register_store):
+def add(environment, register_store, register_one, register_two):
+    if (register_one not in environment['variables'].keys()) or (register_two not in environment['variables'].keys()):
+        return False
+    environment['registers'][register_store] = environment['registers'][register_one] + environment['registers'][register_two]
+    return environment
+
+
+def sub(environment, register_store, register_one, register_two):
+    if (register_one not in environment['variables'].keys()) or (register_two not in environment['variables'].keys()):
+        return False
+    environment['registers'][register_store] = environment['registers'][register_one] - environment['registers'][register_two]
+    return environment
+
+
+def mul(environment, register_store, register_one, register_two):
+    if (register_one not in environment['variables'].keys()) or (register_two not in environment['variables'].keys()):
+        return False
+    environment['registers'][register_store] = environment['registers'][register_one] * environment['registers'][register_two]
+    return environment
+
+def div(environment, register_store, register_one, register_two):
+    if (register_one not in environment['variables'].keys()) or (register_two not in environment['variables'].keys()):
+        return False
+    environment['registers'][register_store] = environment['registers'][register_one] / environment['registers'][register_two]
+    return environment
+
+
+def equals(environment, register_store, register_one, register_two):
     print "stub"
 
 
-def sub(environment, register_one, register_two, register_store):
+def less_than(environment, register_store, register_one, register_two):
     print "stub"
 
 
-def mul(environment, register_one, register_two, register_store):
-    print "stub"
-
-
-def div(environment, register_one, register_two, register_store):
-    print "stub"
-
-
-def equals(environment, register_one, register_two, register_store):
-    print "stub"
-
-
-def less_than(environment, register_one, register_two, register_store):
-    print "stub"
-
-
-def greater_than(environment, register_one, register_two, register_store):
+def greater_than(environment, register_store, register_one, register_two):
     print "stub"
 
 

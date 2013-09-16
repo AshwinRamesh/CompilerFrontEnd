@@ -54,6 +54,7 @@ Task Three
 - [ ] check for main function
 - [ ] function calls should have correct number of arguments
 - [ ] functions get new environment with args
+- [ ] Make sure only ints with functions
 
 Test Cases
 ----------
