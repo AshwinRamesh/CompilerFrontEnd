@@ -6,17 +6,20 @@ import sexp
 import pprint
 import sys
 
+
 ## Process file ##
 def process_file(file_name):
     try:    # check if file exists
-        with open(file_name): pass
+        with open(file_name):
+            pass
     except IOError:
         print "Intermediate Code File does not exist. Exiting..."
         exit()
     # read file
     with open(file_name, 'r') as content_file:
         content = content_file.read()
-    return sexp.parse(content);
+    return sexp.parse(content)
+
 
 ## Initialise Environment ##
 def initialise_environment():
@@ -24,43 +27,63 @@ def initialise_environment():
 
 ## Instructions ##
 
+
 def load_constant(environment, register, value):
-    print "stub"
+    environment['registers'][register] = value
+    return environment
 
-def load_instructions(environment, register, value):
-    print "stub"
 
-def store_instructions(environment, register, value):
-    print "stub"
+def store_instructions(environment, register, var):
+    if register not in environment['registers'].keys():
+        return False
+    environment['registers'][register] = environment['variables'][var]
+    return environment
+
+
+def load_instructions(environment, register, var):
+    if var not in environment['variables'].keys():
+        return False
+    environment['variables'][var] = environment['registers'][register]
+    return environment
+
 
 def add(environment, register_one, register_two, register_store):
     print "stub"
 
+
 def sub(environment, register_one, register_two, register_store):
     print "stub"
+
 
 def mul(environment, register_one, register_two, register_store):
     print "stub"
 
+
 def div(environment, register_one, register_two, register_store):
     print "stub"
+
 
 def equals(environment, register_one, register_two, register_store):
     print "stub"
 
+
 def less_than(environment, register_one, register_two, register_store):
     print "stub"
+
 
 def greater_than(environment, register_one, register_two, register_store):
     print "stub"
 
+
 def branch_change(environment, register, block_zero, block_one):
     print "stub"
+
 
 def return_from_function(environment, register):
     print "stub"
 
 ### End of Instructions ###
+
 
 ## Check argument length ##
 ## Check that the number of args required equals param length
@@ -70,15 +93,13 @@ def check_arg_length(function_args, params):
         exit(1)
     return True
 
+
 ## Process a single instruction ##
 def process_instruction(instruction, environment):
     name = instruction[0]
 
     if name == "lc":
         return load_constant(instruction)
-
-
-
 
 
 ##  Process the program ##
