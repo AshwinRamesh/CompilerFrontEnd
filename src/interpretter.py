@@ -4,6 +4,7 @@
 ## Imports ##
 
 import sexp
+import pprint
 
 ## Process file ##
 
@@ -72,11 +73,8 @@ def return_from_function(environment, register):
 
 def main():
     functions = process_file("../tests/test_intermediate_1.txt");
-    #env = initialise_environment()
-    ## Do computation here ...
-    #a = sexp.parse("(a a (b) (c))");
-    #print a[0][0][0]
-    #print env
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(functions)
 
 if __name__ == "__main__":
     main()

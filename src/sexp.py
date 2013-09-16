@@ -1,9 +1,8 @@
-# @author Paul Bonser - https://github.com/pib
-
 from string import whitespace
 
 atom_end = set('()"\'') | set(whitespace)
 
+# @author Paul Bonser - https://github.com/pib
 def parse(sexp):
     stack, i, length = [[]], 0, len(sexp)
     while i < length:
@@ -37,4 +36,47 @@ def parse(sexp):
                 continue
             else: stack[-1] = ((stack[-1][0] + c),)
         i += 1
-    return stack.pop()
+    return format(stack.pop()[0])
+
+
+# Convert an instruction in this format: [('id',), ('bd',), ('cd',)] => ["id", "bd", "cd"]
+# @author Ashwin Ramesh
+def format_instruction(instructions):
+    new_instuctions = []
+    for instruction in instructions:
+        new_instuction = []
+        for param in instruction:
+            print param
+            if type(param) == tuple:
+                new_instuction.append(param[0])
+            else:
+                new_instuction.append(param)
+        new_instuctions.append(new_instuction)
+    return new_instuctions
+
+# correctly format the parsed lisp list
+# @author Ashwin Ramesh
+def format(parsed_exp):
+    parsed_list = {}
+    for function in parsed_exp:
+        args = []
+        for arg in function[1]:
+            args.append(arg[0])
+        blocks = {}
+        for block in function[2:]:
+            print format_instruction(block[1])
+            blocks[int(block[0])] = format_instruction(block[1:])
+        parsed_list[function[0][0]] = {"args": args, "blocks": blocks}
+    return parsed_list
+
+
+
+# TODO LATER -- cleaner implementation of parse for this assignment
+def parseMe(sexp):
+    parse_list = {}
+    i, length = 0, len(sexp)
+    while i < length:
+        char = sexp[i]
+
+
+        i += 1
