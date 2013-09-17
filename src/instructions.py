@@ -22,8 +22,6 @@ def load_instructions(environment, register, var):
 
 
 def add(environment, register_store, register_one, register_two):
-    if (register_one not in environment['variables'].keys()) or (register_two not in environment['variables'].keys()):
-        return False
     environment['registers'][register_store] = environment['registers'][register_one] + environment['registers'][register_two]
     return environment
 
@@ -65,5 +63,6 @@ def branch_change(environment, register, block_zero, block_one):
 
 
 def return_from_function(environment, register):
-    print "stub"
+    return environment['registers'][register]
+
 

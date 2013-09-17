@@ -31,13 +31,13 @@ def process_block(function, id, env):
     # Iterate instructions and execute
     for instruction in block:
         if instruction[0] == "lc":
-            pass
+            instructions.load_constant(env, instruction[1], instruction[2])
         elif instruction[0] == "ld":
             pass
         elif instruction[0] == "st":
             pass
         elif instruction[0] == "add":
-            pass
+            instructions.add(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "sub":
             pass
         elif instruction[0] == "mul":
@@ -53,7 +53,7 @@ def process_block(function, id, env):
         elif instruction[0] == "br":
             pass
         elif instruction[0] == "ret":
-            pass
+            return instructions.return_from_function(env, instruction[1])
         elif instruction[0] == "call":
             pass
         else:
@@ -79,9 +79,7 @@ def process_function(name, args):
     # Process blocks
     output = process_block(name, 0, env)
     print env
-
-
-    pass
+    return output
 
 
 ##  Process the program ##
@@ -91,7 +89,7 @@ def process_program(args=[]):
     try:
         if "main" not in functions.keys():
             raise MainUndefinedException("main")
-        process_function("main", args)
+        print process_function("main", args)
     except FunctionUndefinedException as e:
         print "Error: Function name '%s' is undefined." %(e.value)
         exit(1)
@@ -107,9 +105,9 @@ def process_program(args=[]):
     except UndefinedIntermediateCodeException as e:
         print "Error: Intermediate function '%s' in function '%s' on block %d is undefined." %(e.instruction, e.function, e.block)
         exit(1)
-    except Exception, e:
-        print "Error: Unknown error."
-        exit(1)
+   #except Exception, e:
+   #    print "Error: Unknown error. %s" %()
+   #    exit(1)
 
 
 def main():
