@@ -8,7 +8,6 @@ def parse(sexp):
     while i < length:
         c = sexp[i]
 
-        #print c, stack
         reading = type(stack[-1])
         if reading == list:
             if   c == '(': stack.append([])
