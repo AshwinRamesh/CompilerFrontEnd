@@ -24,11 +24,11 @@ functions : function functions
 
 function
     /* symbols defined in this function */
-    locals
+    locals 
     [
         HashMap<String,Integer> symbols = new HashMap<String,Integer>()
     ]
-    : 'FUNCTION' ID arguments[true] variables block
+    : 'FUNCTION' ID arguments[true] variables
     {
         //if the function name has been seen already
         if ($program::functionNames.contains($ID.text)) {
@@ -38,7 +38,7 @@ function
             $program::functionNames.add($ID.text);
         }
         $program::numArguments.put($ID.text, $arguments.args.size());
-    }
+    } block
     ;
 
 /*
@@ -125,20 +125,18 @@ expression returns [int value]
     {
         Integer v = $function::symbols.get($ID.text);
 	if (v == null) {
-
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+        throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
 	}
     $expression.value = v;
     }
     | ID arguments[false]
     {
-        System.out.println($program::functionNames.toString());
         if (!$program::functionNames.contains($ID.text)) {
-            System.err.println("Error: function '"+$ID.text+"' undefined.");
+            throw new RuntimeException("Error: function '"+$ID.text+"' undefined.");
 	    }
         
 	    if ($program::numArguments.get($ID.text) != $arguments.args.size()) {
-            System.err.println("Error: function '"+$ID.text+"' expects "+$program::numArguments.get($ID.text) +" arguments.");
+            throw new RuntimeException("Error: function '"+$ID.text+"' expects "+$program::numArguments.get($ID.text) +" arguments.");
         }
 
 	 
