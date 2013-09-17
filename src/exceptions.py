@@ -32,7 +32,7 @@ class RegisterUndefinedException(Exception):
 
 class FunctionArgMismatchException(Exception):
 
-    def __init__(self, given, required):
+    def __init__(self, function, given, required):
         self.args_given = given
         self.args_required = required
 
