@@ -7,6 +7,10 @@ import interpretter
 from math import floor
 
 
+## Global Variables ##
+functions = {} # parsed functions
+
+
 def load_constant(environment, register, value):
     environment['registers'][register] = value
     return environment
@@ -86,10 +90,14 @@ def return_from_function(environment, register): # TODO later
     return environment['registers'][register]
 
 
-def call_function(environment, return_register, function, args):
+def call_function(environment, funcs, return_register, function, args):
+    global functions
+    functions = funcs
+    val_args = []
     for arg in args:
         registers_exist(environment, arg)
-    val = interpretter.process_function(function, args)
+        val_args.append(environment['registers'][arg])
+    val = interpretter.process_function(function, val_args, functions)
     environment['registers'][return_register] = val
     return environment
 

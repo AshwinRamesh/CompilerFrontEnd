@@ -55,21 +55,25 @@ def process_block(function, id, env):
         elif instruction[0] == "ret":
             return instructions.return_from_function(env, instruction[1])
         elif instruction[0] == "call":
-            instructions.call_function(env, instruction[1], instruction[2], instruction[3:])
+            instructions.call_function(env, functions, instruction[1], instruction[2], instruction[3:])
         else:
             raise UndefinedIntermediateCodeException(function, id, instruction[0])
     pass
 
 
 ## Process a function ##
-def process_function(name, args):
+def process_function(name, args, funcs = None):
     global functions
+    if funcs != None:
+        functions = funcs
     # Initialise env
+    if name not in functions.keys():
+        raise FunctionUndefinedException(name)
     function = functions[name]
     env = initialise_environment()
 
     # Check for arg length
-    if check_arg_length(functions["main"]['args'], args) != True:
+    if check_arg_length(functions[name]['args'], args) != True:
         raise FunctionArgMismatchException(name, len(args), len(functions[name]["args"]))
 
     # Parse args and place in env
@@ -78,7 +82,7 @@ def process_function(name, args):
 
     # Process blocks
     output = process_block(name, 0, env)
-    print env
+    #print env
     return output
 
 
@@ -121,6 +125,8 @@ def main():
     except UndefinedIntermediateCodeException as e:
         print "Error: Intermediate function '%s' in function '%s' on block %d is undefined." %(e.instruction, e.function, e.block)
         exit(1)
+    except IndexError:
+        print "Error: Corrupted intermediate file. Cannot execute."
    #except Exception, e:
    #    print "Error: Unknown error. %s" %()
    #    exit(1)
