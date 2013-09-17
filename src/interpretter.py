@@ -64,7 +64,7 @@ def process_block(function, id, env):
 ## Process a function ##
 def process_function(name, args, funcs = None):
     global functions
-    if funcs != None:
+    if funcs != None: # Done when functions call functions. Redefine the scope of the globals
         functions = funcs
     # Initialise env
     if name not in functions.keys():
@@ -92,7 +92,7 @@ def process_program(args=[]):
     env = initialise_environment()
     if "main" not in functions.keys():
         raise MainUndefinedException("main")
-    print process_function("main", args)
+    print process_function("main", args) # Print the final result
 
 
 def main():

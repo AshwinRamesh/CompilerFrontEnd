@@ -49,12 +49,14 @@ Task Three
 ----------
 
 - [ ] Create interpretter that executes intermediate code
-- [ ] Process one instruction at a time
-- [ ] have environment for each instruction
+- [x] Process one instruction at a time
+- [x] have environment for each instruction
 - [x] check for main function
 - [x] function calls should have correct number of arguments
-- [ ] functions get new environment with args
-- [ ] Make sure only ints with functions
+- [x] functions get new environment with args
+- [x] Make sure only ints with functions
+- [ ] Recursion
+- [ ] Conditionals
 
 Test Cases
 ----------
