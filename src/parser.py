@@ -79,8 +79,8 @@ def process_file(file_name):
         with open(file_name):
             pass
     except IOError:
-        print "Intermediate Code File does not exist. Exiting..."
-        exit()
+        print "Error: File does not exist. Cannot execute."
+        exit(1)
     # read file
     with open(file_name, 'r') as content_file:
         content = content_file.read()

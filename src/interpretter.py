@@ -33,29 +33,29 @@ def process_block(function, id, env):
         if instruction[0] == "lc":
             instructions.load_constant(env, instruction[1], instruction[2])
         elif instruction[0] == "ld":
-            pass
+            instructions.load_instructions(env, instruction[1], instruction[2])
         elif instruction[0] == "st":
-            pass
+            instructions.store_instructions(env, instruction[1], instruction[2])
         elif instruction[0] == "add":
             instructions.add(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "sub":
-            pass
+            instructions.sub(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "mul":
-            pass
+            instructions.mul(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "div":
-            pass
+            instructions.div(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "cmp":
-            pass
+            instructions.equals(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "lt":
-            pass
+            instructions.less_than(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "gt":
-            pass
+            instructions.greater_than(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "br":
-            pass
+            instructions.branch_change(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "ret":
             return instructions.return_from_function(env, instruction[1])
         elif instruction[0] == "call":
-            pass
+            instructions.call_function(env, instruction[1], instruction[2], instruction[3:])
         else:
             raise UndefinedIntermediateCodeException(function, id, instruction[0])
     pass
@@ -86,10 +86,26 @@ def process_function(name, args):
 def process_program(args=[]):
     global functions
     env = initialise_environment()
+    if "main" not in functions.keys():
+        raise MainUndefinedException("main")
+    print process_function("main", args)
+
+
+def main():
+    global functions
     try:
-        if "main" not in functions.keys():
-            raise MainUndefinedException("main")
-        print process_function("main", args)
+        if len(sys.argv) <= 1:
+            raise FileNotGivenException()
+        functions = parser.process_file(sys.argv[1])
+        pp = pprint.PrettyPrinter(indent=2)
+        pp.pprint(functions)
+        process_program(sys.argv[2:])
+    except IOError:
+        print "Error: File does not exist. Cannot execute."
+        exit(1)
+    except FileNotGivenException as e:
+        print "Error: No input file given. Cannot execute."
+        exit(1)
     except FunctionUndefinedException as e:
         print "Error: Function name '%s' is undefined." %(e.value)
         exit(1)
@@ -109,13 +125,6 @@ def process_program(args=[]):
    #    print "Error: Unknown error. %s" %()
    #    exit(1)
 
-
-def main():
-    global functions
-    functions = parser.process_file("../tests/intermediate-code-tests/add.test"); # TODO: make this dynamic
-    pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(functions)
-    process_program(sys.argv[1:])
 
 if __name__ == "__main__":
     main()

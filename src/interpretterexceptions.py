@@ -36,3 +36,7 @@ class UndefinedIntermediateCodeException(Exception):
         self.function = function
         self.block = block
         self.instruction = instruction
+
+
+class FileNotGivenException(Exception):
+    pass
