@@ -173,7 +173,8 @@ expression returns [int value]
     ;
 
 
-WS : [ \t\r\n]+ -> skip;
 ID : ('a'..'z'|'A'..'Z')('a'..'z'|'A'..'Z'|'0'..'9')*;
 OP : '+'|'-'|'*'|'/'|'<'|'>'|'==';
 NUM : ('-')?('0'..'9')+;
+WS : [ \t\r\n]+ -> skip;
+INVALID: .;
