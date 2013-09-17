@@ -1,13 +1,18 @@
+## Interpretter Implentation ##
+## @author Ashwin Ramesh
+
+
+## Imports ##
 from string import whitespace
 
-atom_end = set('()"\'') | set(whitespace)
 
+## This function will parse a lisp set exp into a more readable format in python.
 # @author Paul Bonser - https://github.com/pib
 def parse(sexp):
+    atom_end = set('()"\'') | set(whitespace)
     stack, i, length = [[]], 0, len(sexp)
     while i < length:
         c = sexp[i]
-
         reading = type(stack[-1])
         if reading == list:
             if   c == '(': stack.append([])
@@ -66,6 +71,20 @@ def format(parsed_exp):
         parsed_list[function[0][0]] = {"args": args, "blocks": blocks}
     return parsed_list
 
+
+## Process file ##
+## @author Ashwin Ramesh
+def process_file(file_name):
+    try:    # check if file exists
+        with open(file_name):
+            pass
+    except IOError:
+        print "Intermediate Code File does not exist. Exiting..."
+        exit()
+    # read file
+    with open(file_name, 'r') as content_file:
+        content = content_file.read()
+    return parse(content)
 
 
 # TODO LATER -- cleaner implementation of parse for this assignment
