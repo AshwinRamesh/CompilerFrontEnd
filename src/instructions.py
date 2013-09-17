@@ -1,8 +1,6 @@
 ## Interpretter Implementation ##
 # @author Ashwin Ramesh
 
-## Instructions ##
-
 
 def load_constant(environment, register, value):
     environment['registers'][register] = value

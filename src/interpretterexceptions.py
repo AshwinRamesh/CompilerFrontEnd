@@ -33,8 +33,9 @@ class RegisterUndefinedException(Exception):
 class FunctionArgMismatchException(Exception):
 
     def __init__(self, function, given, required):
-        self.args_given = given
-        self.args_required = required
+        self.function = function
+        self.given = given
+        self.required = required
 
     def __str__(self):
         return repr(self.value) # change this to return 2 values

@@ -3,7 +3,7 @@
 
 ## Imports ##
 import parser, instructions, utils
-from exceptions import FunctionUndefinedException, MainUndefinedException, VariableUndefinedException, RegisterUndefinedException, FunctionArgMismatchException
+from interpretterexceptions import *
 import pprint
 import sys
 
@@ -30,25 +30,32 @@ def process_instruction(instruction, environment):
 
 
 ## Process a block ##
-def process_block(block):
+def process_block(function, id):
+    global functions
+    block = functions[function]["blocks"][id]
     pass
 
 
 ## Process a function ##
-def process_function(function):
+def process_function(name):
+    global functions
+    function = functions[name]
     pass
 
 
 ##  Process the program ##
 def process_program(args):
+    global functions
     env = initialise_environment()
+    print functions.keys()
     try:
         if "main" not in functions.keys():
             raise MainUndefinedException("main")
         if check_arg_length(functions["main"]['args'], args) != True:
-            raise FunctionArgMismatchException("main" len(args), len(functions["main"]["args"]))
+            raise FunctionArgMismatchException("main", len(args), len(functions["main"]["args"]))
         print "Correct Input"
-
+        # DO COMPUTATION HERE
+        process_function("main")
     except FunctionUndefinedException as e:
         print "Error: Function name '%s' is undefined." %(e.value)
         exit(1)
@@ -67,9 +74,10 @@ def process_program(args):
 
 
 def main():
+    global functions
     functions = parser.process_file("../tests/test_intermediate_1.txt");
-    #pp = pprint.PrettyPrinter(indent=4)
-    #pp.pprint(functions)
+    pp = pprint.PrettyPrinter(indent=2)
+    pp.pprint(functions)
     process_program(sys.argv[1:])
 
 if __name__ == "__main__":
