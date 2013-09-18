@@ -48,15 +48,16 @@ Task Two
 Task Three
 ----------
 
-- [ ] Create interpretter that executes intermediate code
+- [x] Create interpretter that executes intermediate code
 - [x] Process one instruction at a time
 - [x] have environment for each instruction
 - [x] check for main function
 - [x] function calls should have correct number of arguments
 - [x] functions get new environment with args
 - [x] Make sure only ints with functions
-- [ ] Recursion
-- [ ] Conditionals
+- [x] Recursion
+- [x] Conditionals
+- [ ] Write the shell script to execute this
 
 Test Cases
 ----------
