@@ -102,8 +102,8 @@ def main():
         if len(sys.argv) <= 1:
             raise FileNotGivenException()
         functions = parser.process_file(sys.argv[1])
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(functions)
+        #p = pprint.PrettyPrinter(indent=2)
+        #p.pprint(functions)
         process_program(sys.argv[2:])
     except IOError:
         print "Error: File does not exist. Cannot execute."
