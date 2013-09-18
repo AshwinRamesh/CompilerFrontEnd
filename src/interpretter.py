@@ -51,7 +51,9 @@ def process_block(function, id, env):
         elif instruction[0] == "gt":
             instructions.greater_than(env, instruction[1], instruction[2], instruction[3])
         elif instruction[0] == "br":
-            instructions.branch_change(env, instruction[1], instruction[2], instruction[3])
+            utils.blocks_exist(function, functions[function], instruction[2:4])
+            branch = instructions.branch_change(env, instruction[1], instruction[2], instruction[3])
+            return process_block(function, branch, env)
         elif instruction[0] == "ret":
             return instructions.return_from_function(env, instruction[1])
         elif instruction[0] == "call":
@@ -78,7 +80,7 @@ def process_function(name, args, funcs = None):
 
     # Parse args and place in env
     for i in range(0, len(args)):
-        env["variables"][function["args"][i]] = args[i]
+        env["variables"][function["args"][i]] = int(args[i])
 
     # Process blocks
     output = process_block(name, 0, env)
@@ -125,11 +127,15 @@ def main():
     except UndefinedIntermediateCodeException as e:
         print "Error: Intermediate function '%s' in function '%s' on block %d is undefined." %(e.instruction, e.function, e.block)
         exit(1)
+    except BlockUndefinedException as e:
+        print "Error: Block %d does not exist in function '%s'." %(e.block, e.function)
+        exit(1)
     except IndexError:
         print "Error: Corrupted intermediate file. Cannot execute."
-   #except Exception, e:
-   #    print "Error: Unknown error. %s" %()
-   #    exit(1)
+        exit(1)
+    #except Exception, e:
+    #    print "Error: Unknown error. %s" %()
+    #    exit(1)
 
 
 if __name__ == "__main__":

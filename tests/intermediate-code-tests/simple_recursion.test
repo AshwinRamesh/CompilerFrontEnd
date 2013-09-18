@@ -1,0 +1,17 @@
+( (main (n)
+	(0
+		(ld r1 n)
+		(lc r2 10)
+		(gt r3 r1 r2)
+		(br r3 1 2)
+	)
+	(1
+		(ret r1)
+	)
+	(2
+		(lc r5 1)
+		(add r6 r1 r5)
+		(call r7 main r6)
+		(ret r7)
+	)
+))

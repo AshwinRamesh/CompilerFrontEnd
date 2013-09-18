@@ -30,29 +30,29 @@ def store_instructions(environment, register, var):
 
 def add(environment, register_store, register_one, register_two):
     registers_exist(environment, register_one, register_two)
-    environment['registers'][register_store] = environment['registers'][register_one] + environment['registers'][register_two]
+    environment['registers'][register_store] = int(environment['registers'][register_one]) + int(environment['registers'][register_two])
     return environment
 
 
 def sub(environment, register_store, register_one, register_two):
     registers_exist(environment, register_one, register_two)
-    environment['registers'][register_store] = environment['registers'][register_one] - environment['registers'][register_two]
+    environment['registers'][register_store] = int(environment['registers'][register_one]) - int(environment['registers'][register_two])
     return environment
 
 
 def mul(environment, register_store, register_one, register_two):
     registers_exist(environment, register_one, register_two)
-    environment['registers'][register_store] = int(environment['registers'][register_one] * environment['registers'][register_two])
+    environment['registers'][register_store] = int(int(environment['registers'][register_one]) * int(environment['registers'][register_two]))
     return environment
 
 def div(environment, register_store, register_one, register_two):
     registers_exist(environment, register_one, register_two)
-    environment['registers'][register_store] = int(environment['registers'][register_one] / environment['registers'][register_two])
+    environment['registers'][register_store] = int(int(environment['registers'][register_one]) / int(environment['registers'][register_two]))
     return environment
 
 def equals(environment, register_store, register_one, register_two):
     registers_exist(environment, register_one, register_two)
-    if environment['registers'][register_one] == environment['registers'][register_two]:
+    if int(environment['registers'][register_one]) == int(environment['registers'][register_two]):
         environment['registers'][register_store] = 1
     else:
         environment['registers'][register_store] = 0
@@ -61,7 +61,7 @@ def equals(environment, register_store, register_one, register_two):
 
 def less_than(environment, register_store, register_one, register_two):
     registers_exist(environment, register_one, register_two)
-    if environment['registers'][register_one] < environment['registers'][register_two]:
+    if int(environment['registers'][register_one]) < int(environment['registers'][register_two]):
         environment['registers'][register_store] = 1
     else:
         environment['registers'][register_store] = 0
@@ -70,23 +70,23 @@ def less_than(environment, register_store, register_one, register_two):
 
 def greater_than(environment, register_store, register_one, register_two):
     registers_exist(environment, register_one, register_two)
-    if environment['registers'][register_one] > environment['registers'][register_two]:
+    if int(environment['registers'][register_one]) > int(environment['registers'][register_two]):
         environment['registers'][register_store] = 1
     else:
+        print "Less than or ="
         environment['registers'][register_store] = 0
     return environment
 
 
-# TODO
 def branch_change(environment, register, block_zero, block_one):
     registers_exist(environment, register)
+    print environment['registers'][register]
     if environment['registers'][register] == 0:
-        pass # go to block_one
+        return block_one
     else:
-        pass # go to block_zero
+        return block_zero
 
-
-def return_from_function(environment, register): # TODO later
+def return_from_function(environment, register):
     return environment['registers'][register]
 
 

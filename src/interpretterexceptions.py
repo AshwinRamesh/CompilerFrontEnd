@@ -38,5 +38,12 @@ class UndefinedIntermediateCodeException(Exception):
         self.instruction = instruction
 
 
+class BlockUndefinedException(Exception):
+
+    def __init__(self, function, block):
+        self.function = function
+        self.block = block
+
+
 class FileNotGivenException(Exception):
     pass

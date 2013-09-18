@@ -2,7 +2,7 @@
 ## @author Ashwin Ramesh
 
 ## Imports ##
-import interpretterexceptions
+from interpretterexceptions import VariableUndefinedException, RegisterUndefinedException, BlockUndefinedException
 
 def registers_exist(env, *args):
 	for arg in args:
@@ -13,5 +13,13 @@ def registers_exist(env, *args):
 def variables_exist(env, *args):
 	for arg in args:
 		if arg not in env["variables"].keys():
-			raise RegisterUndefinedException(arg)
+			raise VariableUndefinedException(arg)
 	return True
+
+def blocks_exist(name, function, args):
+	print args
+	for arg in args:
+		if arg not in function["blocks"].keys():
+			print arg
+			raise BlockUndefinedException(name, arg)
+
