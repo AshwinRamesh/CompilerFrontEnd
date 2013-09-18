@@ -85,14 +85,3 @@ def process_file(file_name):
     with open(file_name, 'r') as content_file:
         content = content_file.read()
     return parse(content)
-
-
-# TODO LATER -- cleaner implementation of parse for this assignment
-def parseMe(sexp):
-    parse_list = {}
-    i, length = 0, len(sexp)
-    while i < length:
-        char = sexp[i]
-
-
-        i += 1
