@@ -84,7 +84,6 @@ def process_function(name, args, funcs = None):
 
     # Process blocks
     output = process_block(name, 0, env)
-    #print env
     return output
 
 

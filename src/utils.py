@@ -17,7 +17,6 @@ def variables_exist(env, *args):
 	return True
 
 def blocks_exist(name, function, args):
-	print args
 	for arg in args:
 		if arg not in function["blocks"].keys():
 			print arg

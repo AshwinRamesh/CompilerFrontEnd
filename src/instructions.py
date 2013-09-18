@@ -22,7 +22,7 @@ def load_instructions(environment, register, var):
     return environment
 
 
-def store_instructions(environment, register, var):
+def store_instructions(environment, var, register):
     registers_exist(environment, register)
     environment['variables'][var] = environment['registers'][register]
     return environment
@@ -73,14 +73,12 @@ def greater_than(environment, register_store, register_one, register_two):
     if int(environment['registers'][register_one]) > int(environment['registers'][register_two]):
         environment['registers'][register_store] = 1
     else:
-        print "Less than or ="
         environment['registers'][register_store] = 0
     return environment
 
 
 def branch_change(environment, register, block_zero, block_one):
     registers_exist(environment, register)
-    print environment['registers'][register]
     if environment['registers'][register] == 0:
         return block_one
     else:
