@@ -8,6 +8,7 @@ from string import whitespace
 
 ## This function will parse a lisp set exp into a more readable format in python.
 # @author Paul Bonser - https://github.com/pib
+# some edits by Alexander Hogue
 def parse(sexp):
     atom_end = set('()"\'') | set(whitespace)
     stack, i, length = [[]], 0, len(sexp)
@@ -19,9 +20,10 @@ def parse(sexp):
             elif c == ')':
                 stack[-2].append(stack.pop())
                 if stack[-1][0] == ('quote',): stack[-2].append(stack.pop())
-            elif c == '"': stack.append('')
-            elif c == "'": stack.append([('quote',)])
-            elif c in whitespace: pass
+            elif c == '"': 
+                stack.append('')
+            elif c in whitespace: 
+                pass
             else: stack.append((c,))
         elif reading == str:
             if   c == '"':
@@ -46,16 +48,8 @@ def parse(sexp):
 # Convert an instruction in this format: [('id',), ('bd',), ('cd',)] => ["id", "bd", "cd"]
 # @author Ashwin Ramesh
 def format_instruction(instructions):
-    new_instuctions = []
-    for instruction in instructions:
-        new_instuction = []
-        for param in instruction:
-            if type(param) == tuple:
-                new_instuction.append(param[0])
-            else:
-                new_instuction.append(param)
-        new_instuctions.append(new_instuction)
-    return new_instuctions
+    return [[instr[0]] if type(instr) == tuple else instr for instr in instructions]
+    
 
 # correctly format the parsed lisp list
 # @author Ashwin Ramesh
@@ -79,9 +73,9 @@ def process_file(file_name):
         with open(file_name):
             pass
     except IOError:
-        print "Error: File does not exist. Cannot execute."
-        exit(1)
+        raise IOError,"File does not exist. Cannot execute."
     # read file
-    with open(file_name, 'r') as content_file:
+    with open(file_name, 'rU') as content_file:
         content = content_file.read()
     return parse(content)
+
