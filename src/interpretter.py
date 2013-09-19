@@ -4,7 +4,6 @@
 ## Imports ##
 import parser, instructions, utils
 from interpretterexceptions import *
-import pprint
 import sys
 
 ## Global Variables ##
@@ -30,41 +29,43 @@ def process_block(function, id, env):
     block = functions[function]["blocks"][id]
     # Iterate instructions and execute
     for instruction in block:
-        if instruction[0] == "lc":
-            instructions.load_constant(env, instruction[1], instruction[2])
-        elif instruction[0] == "ld":
-            instructions.load_instructions(env, instruction[1], instruction[2])
-        elif instruction[0] == "st":
-            instructions.store_instructions(env, instruction[1], instruction[2])
-        elif instruction[0] == "add":
-            instructions.add(env, instruction[1], instruction[2], instruction[3])
-        elif instruction[0] == "sub":
-            instructions.sub(env, instruction[1], instruction[2], instruction[3])
-        elif instruction[0] == "mul":
-            instructions.mul(env, instruction[1], instruction[2], instruction[3])
-        elif instruction[0] == "div":
-            instructions.div(env, instruction[1], instruction[2], instruction[3])
-        elif instruction[0] == "cmp":
-            instructions.equals(env, instruction[1], instruction[2], instruction[3])
-        elif instruction[0] == "lt":
-            instructions.less_than(env, instruction[1], instruction[2], instruction[3])
-        elif instruction[0] == "gt":
-            instructions.greater_than(env, instruction[1], instruction[2], instruction[3])
-        elif instruction[0] == "br":
-            utils.blocks_exist(function, functions[function], instruction[2:4])
-            branch = instructions.branch_change(env, instruction[1], instruction[2], instruction[3])
+        operation = instruction[0]
+        args = instruction[1:]
+        if operation == "lc":
+            instructions.load_constant(env, args[0], args[1])
+        elif operation == "ld":
+            instructions.load_instructions(env, args[0], args[1])
+        elif operation == "st":
+            instructions.store_instructions(env, args[0], args[1])
+        elif operation == "add":
+            instructions.add(env, args[0], args[1], args[2])
+        elif operation == "sub":
+            instructions.sub(env, args[0], args[1], args[2])
+        elif operation == "mul":
+            instructions.mul(env, args[0], args[1], args[2])
+        elif operation == "div":
+            instructions.div(env, args[0], args[1], args[2])
+        elif operation == "cmp":
+            instructions.equals(env, args[0], args[1], args[2])
+        elif operation == "lt":
+            instructions.less_than(env, args[0], args[1], args[2])
+        elif operation == "gt":
+            instructions.greater_than(env, args[0], args[1], args[2])
+        elif operation == "br":
+            utils.blocks_exist(function, functions[function], args[1:3])
+            branch = instructions.branch_change(env, args[0], args[1], args[2])
             return process_block(function, branch, env)
-        elif instruction[0] == "ret":
-            return instructions.return_from_function(env, instruction[1])
-        elif instruction[0] == "call":
-            instructions.call_function(env, functions, instruction[1], instruction[2], instruction[3:])
+        elif operation == "ret":
+            return instructions.return_from_function(env, args[0])
+        elif operation == "call":
+            instructions.call_function(env, functions, args[0], args[1], args[2:])
         else:
-            raise UndefinedIntermediateCodeException(function, id, instruction[0])
+            raise UndefinedIntermediateCodeException(function, id, operation)
     pass
 
 
 ## Process a function ##
-def process_function(name, args, funcs = None):
+def process_function(name, args, funcs=None):
     global functions
     if funcs != None: # Done when functions call functions. Redefine the scope of the globals
         functions = funcs
@@ -90,7 +91,6 @@ def process_function(name, args, funcs = None):
 ##  Process the program ##
 def process_program(args=[]):
     global functions
-    env = initialise_environment()
     if "main" not in functions.keys():
         raise MainUndefinedException("main")
     print process_function("main", args) # Print the final result
@@ -102,8 +102,6 @@ def main():
         if len(sys.argv) <= 1:
             raise FileNotGivenException()
         functions = parser.process_file(sys.argv[1])
-        #p = pprint.PrettyPrinter(indent=2)
-        #p.pprint(functions)
         process_program(sys.argv[2:])
     except IOError:
         print "Error: File does not exist. Cannot execute."
@@ -132,9 +130,6 @@ def main():
     except IndexError:
         print "Error: Corrupted intermediate file. Cannot execute."
         exit(1)
-    #except Exception, e:
-    #    print "Error: Unknown error. %s" %()
-    #    exit(1)
 
 
 if __name__ == "__main__":
