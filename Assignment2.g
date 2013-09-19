@@ -6,16 +6,14 @@ grammar Assignment2;
 }
 
 program
+    /* functionDefs = map of function names -> number of arguments */
     locals
     [
-        ArrayList<String> functionNames = new ArrayList<String>(),
-        HashMap<String, Integer> numArguments = new HashMap<String, Integer>()
+        HashMap<String, Integer> functionDefs = new HashMap<String, Integer>()
     ]
     @after
     {
-        if (!$program::functionNames.contains("main")) {
-	    throw new RuntimeException("Error: No main function defined.");
-	}
+        Assignment2Semantics.checkMainDefined($program::functionDefs);
     }
     : functions;
 
@@ -30,14 +28,7 @@ function
     ]
     : 'FUNCTION' ID arguments[true] variables 
     {
-        //if the function name has been seen already
-        if ($program::functionNames.contains($ID.text)) {
-            throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
-        }
-        else {
-            $program::functionNames.add($ID.text);
-        }
-        $program::numArguments.put($ID.text, $arguments.args.size());
+        Assignment2Semantics.handleFunctionDefinition($program::functionDefs, $ID.text, $arguments.args.size());
     } block
     ;
 
@@ -46,10 +37,12 @@ function
     This is sent to id_list to tell it whether we need to check only [passing]
     or insert these symbols to the function table [declaring].
  */
-arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')' {
-    $args = $id_list.return_ids;
-}
-    | '()' {
+arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')'
+    {
+        $args = $id_list.return_ids;
+    }
+    | '()'
+    {
         $args = new ArrayList<String>();
     }
     ;
@@ -63,27 +56,13 @@ variables : 'VARS' id_list[false] ';'
    Done when in expression: ID arguments;
 */
 id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
-    @init {
+    @init
+    {
         $return_ids = new ArrayList<String>();
     }
     : a=ID {$return_ids.add($a.text);} (',' b=ID{$return_ids.add($b.text);})* //I have NO IDEA how to format this
     {
-
-        for(String id : $return_ids) {
-
-            if ($checkOnly) {
-                if ($function::symbols.get(id) == null) {
-
-                    throw new RuntimeException("Error: variable '"+id+"' undefined.");
-                }
-            }
-            else if ($function::symbols.get(id) != null) {
-                throw new RuntimeException("Error: variable '"+id+"' redefined.");
-            }
-            else {
-                $function::symbols.put(id, 0);
-            }
-        }
+        Assignment2Semantics.handleIDList($function::symbols, $return_ids, $checkOnly);
     }
     ;
 
@@ -95,22 +74,15 @@ statements : statement ';' statements
 statement 
     : ID '=' expression
     {
-        if ($function::symbols.get($ID.text) == null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
-	}
-	$function::symbols.put($ID.text, $expression.value);
+        Assignment2Semantics.handleAssignmentStatement($function::symbols, $ID.text, $expression.value);
     }
     | 'IF' ID 'THEN' block ('ELSE' block)?
     {
-        if ($function::symbols.get($ID.text) == null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
-	}
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
     }
     | 'RETURN' ID
     {
-    	if ($function::symbols.get($ID.text) == null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
-        }
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
     }
     ;
 
@@ -121,45 +93,19 @@ expression returns [int value]
     }
     | ID
     {
-        Integer v = $function::symbols.get($ID.text);
-	if (v == null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
-	}
-    $expression.value = v;
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
+        $expression.value = $function::symbols.get($ID.text);
     }
     | ID arguments[false]
     {
-        if (!$program::functionNames.contains($ID.text)) {
-            throw new RuntimeException("Error: function '"+$ID.text+"' undefined.");
-	    }
-
-	    if ($program::numArguments.get($ID.text) != $arguments.args.size()) {
-            throw new RuntimeException("Error: function '"+$ID.text+"' expects "+$program::numArguments.get($ID.text) +" arguments.");
-        }
+        Assignment2Semantics.handleCallExpression($program::functionDefs, $ID.text, $arguments.args.size());
+        
+        // TODO: Actually call the function
+        $expression.value = 0;
     }
     | '(' left=expression OP right=expression ')'
     {
-    	if ($OP.text.equals("+")) {
-	    $expression.value = $left.value+$right.value;
-	}
-	if ($OP.text.equals("-")) {
-            $expression.value = $left.value-$right.value;
-	}
-	if ($OP.text.equals("*")) {
-	    $expression.value = $left.value*$right.value;
-	}
-	if ($OP.text.equals("/")) {
-	    $expression.value = $left.value/$right.value;
-	}
-	if ($OP.text.equals("<")) {
-	    $expression.value = ($left.value<$right.value) ? 1 : 0;
-	}
-	if ($OP.text.equals(">")) {
-	    $expression.value = ($left.value>$right.value) ? 1 : 0;
-	}
-	if ($OP.text.equals("==")) {
-	    $expression.value = ($left.value==$right.value) ? 1 : 0;
-	}
+        $expression.value = Assignment2Semantics.handleOperationExpression($OP.text, $left.value, $right.value);
     }
     ;
 
