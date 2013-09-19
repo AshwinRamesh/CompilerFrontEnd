@@ -4,7 +4,6 @@
 ## Imports ##
 from utils import registers_exist, variables_exist
 import interpretter
-from math import floor
 
 
 ## Global Variables ##

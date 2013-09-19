@@ -75,13 +75,9 @@ def format(parsed_exp):
 ## Process file ##
 ## @author Ashwin Ramesh
 def process_file(file_name):
-    try:    # check if file exists
-        with open(file_name):
-            pass
-    except IOError:
-        print "Error: File does not exist. Cannot execute."
-        exit(1)
+    with open(file_name):
+        pass
     # read file
-    with open(file_name, 'r') as content_file:
+    with open(file_name, 'rU') as content_file:
         content = content_file.read()
     return parse(content)

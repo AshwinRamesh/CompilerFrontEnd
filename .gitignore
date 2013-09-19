@@ -1,4 +1,5 @@
 *.java
+!Assignment2Semantics.java
 *.class
 *.tokens
 *~
