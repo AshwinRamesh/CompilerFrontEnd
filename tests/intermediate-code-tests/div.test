@@ -1,0 +1,8 @@
+( (main ()
+	(0
+		(lc r1 5)
+		(lc r2 3)
+		(div r3 r1 r2)
+		(ret r3)
+	)
+))

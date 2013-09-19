@@ -14,17 +14,20 @@ grammar Assignment2;
     import java.util.ArrayList;
 }
 
-
 program
     locals
     [
-        ArrayList<String> functionNames = new ArrayList<String>()
+        ArrayList<String> functionNames = new ArrayList<String>(),
+        HashMap<String, Integer> numArguments = new HashMap<String, Integer>(),
+        //maps the number of a register ('r1', 'r2', etc.) to its value
+        HashMap<Integer, Integer> registers = new HashMap<Integer, Integer>()
+        ArrayList<String> code = new ArrayList<String>();
     ]
     @after
     {
         if (!$program::functionNames.contains("main")) {
-	    throw new RuntimeException("Error: No main function defined.");
-	}
+            throw new RuntimeException("Error: No main function defined.");
+        }
     }
     : functions; //generate ( + functions + )
 
@@ -33,17 +36,18 @@ functions : function functions
 
 function
     /* symbols defined in this function */
-    locals
+    locals 
     [
         HashMap<String,Integer> symbols = new HashMap<String,Integer>()
     ]
-    : 'FUNCTION' ID arguments[true] variables block
+    : 'FUNCTION' ID arguments[true] variables 
     {
+
+        $program::code.add("(");
+        $program::code.add($ID.text);
         //Generate:
         //( $ID.text (" ".join(arguments))
         //( 0
-        //...<arbitrary> )
-
         //if the function name has been seen already
         if ($program::functionNames.contains($ID.text)) {
             throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
@@ -51,7 +55,8 @@ function
         else {
             $program::functionNames.add($ID.text);
         }
-    }
+        $program::numArguments.put($ID.text, $arguments.args.size());
+    } block
     ;
 
 /*
@@ -59,8 +64,13 @@ function
     This is sent to id_list to tell it whether we need to check only [passing]
     or insert these symbols to the function table [declaring].
  */
-arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')'
-    | '()';
+arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')' {
+    $args = $id_list.return_ids;
+}
+    | '()' {
+        $args = new ArrayList<String>();
+    }
+    ;
 
 variables : 'VARS' id_list[false] ';'
     | ;
@@ -70,31 +80,36 @@ variables : 'VARS' id_list[false] ';'
    That is, we don't want to set its value to anything.
    Done when in expression: ID arguments;
 */
-id_list[boolean checkOnly] returns [List<Token> return_ids]
-    : ids+=ID (',' ids+=ID)*
+id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
+    @init {
+        $return_ids = new ArrayList<String>();
+    }
+    : a=ID {$return_ids.add($a.text);} (',' b=ID{$return_ids.add($b.text);})* //I have NO IDEA how to format this
     {
-        $return_ids = $ids; //YEAH OKAY
 
-        for(Token id : $ids) {
+        for(String id : $return_ids) {
 
             if ($checkOnly) {
-                if ($function::symbols.get(id.text) == null) {
+                if ($function::symbols.get(id) == null) {
 
-                    throw new RuntimeException("Error: variable '"+id.text+"' undefined.");
+                    throw new RuntimeException("Error: variable '"+id+"' undefined.");
                 }
             }
-            else if ($function::symbols.get(id.text) != null) {
-                throw new RuntimeException("Error: variable '"+id.text+"' redefined.");
+            else if ($function::symbols.get(id) != null) {
+                throw new RuntimeException("Error: variable '"+id+"' redefined.");
             }
             else {
-                //Initialize new variables to 0
-                $function::symbols.put(id.text, 0);
+                $function::symbols.put(id, 0);
             }
         }
     }
     ;
 
-block : 'BEGIN' statements 'END' ;
+block : 'BEGIN' {
+    //generate ( <blocknum>
+    }  statements 'END' {
+        //generate )
+    } ;
 
 statements : statement ';' statements
     | ;
@@ -106,10 +121,9 @@ statement
         //<get register number that expression stored the result in>
         //(st ID r<number>)
         if ($function::symbols.get($ID.text) == null) {
-            System.out.println($function::symbols.toString());
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined. MAXSWAG");
-	    }
-        $function::symbols.put($ID.text, $expression.value);
+            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
+        }
+	$function::symbols.put($ID.text, $expression.value);
     }
     | 'IF' ID 'THEN' block ('ELSE' block)?
     {
@@ -123,7 +137,7 @@ statement
         //(ld r<number> ID)
         //(ret r<number>)
 
-    	if ($function::symbols.get($ID.text) == null) {
+        if ($function::symbols.get($ID.text) == null) {
             throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
         }
     }
@@ -149,14 +163,13 @@ expression returns [int value]
     //Function application
     | ID arguments[false]
     {
-        
-        System.out.println($program::functionNames.toString());
         if (!$program::functionNames.contains($ID.text)) {
-	    System.err.println("Error: function '"+$ID.text+"' undefined.");
-	}
-	// TODO: check number of arguments match function definition
-	// TODO: compute value by calling the function (HOW??)
+            throw new RuntimeException("Error: function '"+$ID.text+"' undefined.");
+	    }
 
+	    if ($program::numArguments.get($ID.text) != $arguments.args.size()) {
+            throw new RuntimeException("Error: function '"+$ID.text+"' expects "+$program::numArguments.get($ID.text) +" arguments.");
+        }
     }
     | '(' left=expression OP right=expression ')'
     {
@@ -166,27 +179,27 @@ expression returns [int value]
         //(ld rb $right.value)
         //(add/sub/mul/div/[le]/gt/cmp rx ra rb)
         // rx now has the result of the expression
-    	if ($OP.text.equals("+")) {
-	    $expression.value = $left.value+$right.value;
-	}
-	if ($OP.text.equals("-")) {
-            $expression.value = $left.value-$right.value;
-	}
-	if ($OP.text.equals("*")) {
-	    $expression.value = $left.value*$right.value;
-	}
-	if ($OP.text.equals("/")) {
-	    $expression.value = $left.value/$right.value;
-	}
-	if ($OP.text.equals("<")) {
-	    $expression.value = ($left.value<$right.value) ? 1 : 0;
-	}
-	if ($OP.text.equals(">")) {
-	    $expression.value = ($left.value>$right.value) ? 1 : 0;
-	}
-	if ($OP.text.equals("==")) {
-	    $expression.value = ($left.value==$right.value) ? 1 : 0; 
-	}
+            if ($OP.text.equals("+")) {
+            $expression.value = $left.value+$right.value;
+        }
+        if ($OP.text.equals("-")) {
+                $expression.value = $left.value-$right.value;
+        }
+        if ($OP.text.equals("*")) {
+            $expression.value = $left.value*$right.value;
+        }
+        if ($OP.text.equals("/")) {
+            $expression.value = $left.value/$right.value;
+        }
+        if ($OP.text.equals("<")) {
+            $expression.value = ($left.value<$right.value) ? 1 : 0;
+        }
+        if ($OP.text.equals(">")) {
+            $expression.value = ($left.value>$right.value) ? 1 : 0;
+        }
+        if ($OP.text.equals("==")) {
+            $expression.value = ($left.value==$right.value) ? 1 : 0;
+        }
     }
     ;
 
