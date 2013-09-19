@@ -1,0 +1,10 @@
+FUNCTION f()
+BEGIN
+RETURN 1;
+END
+FUNCTION main(n)
+VARS a, b;
+BEGIN
+a = f(a);
+RETURN a;
+END

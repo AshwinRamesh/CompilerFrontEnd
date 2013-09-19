@@ -8,7 +8,8 @@ grammar Assignment2;
 program
     locals
     [
-        ArrayList<String> functionNames = new ArrayList<String>()
+        ArrayList<String> functionNames = new ArrayList<String>(),
+        HashMap<String, Integer> numArguments = new HashMap<String, Integer>()
     ]
     @after
     {
@@ -27,7 +28,7 @@ function
     [
         HashMap<String,Integer> symbols = new HashMap<String,Integer>()
     ]
-    : 'FUNCTION' ID
+    : 'FUNCTION' ID arguments[true] variables 
     {
         //if the function name has been seen already
         if ($program::functionNames.contains($ID.text)) {
@@ -36,7 +37,8 @@ function
         else {
             $program::functionNames.add($ID.text);
         }
-    } arguments[true] variables block
+        $program::numArguments.put($ID.text, $arguments.args.size());
+    } block
     ;
 
 /*
@@ -44,8 +46,13 @@ function
     This is sent to id_list to tell it whether we need to check only [passing]
     or insert these symbols to the function table [declaring].
  */
-arguments[boolean isDeclaring] : '(' id_list[!$isDeclaring] ')'
-    | '()';
+arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')' {
+    $args = $id_list.return_ids;
+}
+    | '()' {
+        $args = new ArrayList<String>();
+    }
+    ;
 
 variables : 'VARS' id_list[false] ';'
     | ;
@@ -55,24 +62,26 @@ variables : 'VARS' id_list[false] ';'
    That is, we don't want to set its value to anything.
    Done when in expression: ID arguments;
 */
-id_list[boolean checkOnly] returns [List<Token> return_ids]
-    : ids+=ID (',' ids+=ID)*
+id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
+    @init {
+        $return_ids = new ArrayList<String>();
+    }
+    : a=ID {$return_ids.add($a.text);} (',' b=ID{$return_ids.add($b.text);})* //I have NO IDEA how to format this
     {
-        $return_ids = $ids; //YEAH OKAY
 
-        for(Token id : $ids) {
-            String idText = id.getText();
+        for(String id : $return_ids) {
+
             if ($checkOnly) {
-                if ($function::symbols.get(idText) == null) {
+                if ($function::symbols.get(id) == null) {
 
-                    throw new RuntimeException("Error: variable '"+idText+"' undefined.");
+                    throw new RuntimeException("Error: variable '"+id+"' undefined.");
                 }
             }
-            else if ($function::symbols.get(idText) != null) {
-                throw new RuntimeException("Error: variable '"+idText+"' redefined.");
+            else if ($function::symbols.get(id) != null) {
+                throw new RuntimeException("Error: variable '"+id+"' redefined.");
             }
             else {
-                $function::symbols.put(idText, 0);
+                $function::symbols.put(id, 0);
             }
         }
     }
@@ -116,16 +125,17 @@ expression returns [int value]
 	if (v == null) {
             throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
 	}
-	$expression.value = v;
+    $expression.value = v;
     }
     | ID arguments[false]
     {
         if (!$program::functionNames.contains($ID.text)) {
-	    throw new RuntimeException("Error: function '"+$ID.text+"' undefined.");
-	}
-	// TODO: check number of arguments match function definition
-	// TODO: compute value by calling the function (HOW??)
+            throw new RuntimeException("Error: function '"+$ID.text+"' undefined.");
+	    }
 
+	    if ($program::numArguments.get($ID.text) != $arguments.args.size()) {
+            throw new RuntimeException("Error: function '"+$ID.text+"' expects "+$program::numArguments.get($ID.text) +" arguments.");
+        }
     }
     | '(' left=expression OP right=expression ')'
     {
