@@ -15,16 +15,21 @@ grammar Assignment2;
 }
 
 program
-    /* functionDefs = map of function names -> number of arguments */
     locals
     [
-        HashMap<String, Integer> functionDefs = new HashMap<String, Integer>()
+        /* functionDefs = map of function names -> number of arguments */
+        HashMap<String, Integer> functionDefs = new HashMap<String, Integer>(),
+        /* arraylist of pieces of intermediate code to be generated. To be joined into a string at the end */
+        ArrayList<String> code = new ArrayList<String>(),
+        /* functionBlocks = map of function name -> list of blocks in it */
+        HashMap<String, ArrayList<Block>> functionBlocks = new HashMap<String, ArrayList<Block>>();
     ]
     @after
     {
         Assignment2Semantics.checkMainDefined($program::functionDefs);
+        System.out.println(Assignment2Codegen.join($program::code, " ")); 
     }
-    : functions; //generate ( + functions + )
+    : { $program::code.add("(");} functions {$program::code.add(")");};
 
 functions : function functions
     | ;
@@ -33,16 +38,18 @@ function
     /* symbols defined in this function */
     locals 
     [
-        HashMap<String,Integer> symbols = new HashMap<String,Integer>()
+        HashMap<String,Integer> symbols = new HashMap<String,Integer>(),
+        int currentBlock = 0
+
     ]
-    : 'FUNCTION' ID arguments[true] variables 
+    : 'FUNCTION' ID arguments[true] {
+        $program::code.add( "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")");
+    }
+    variables 
     {
-        //Generate:
-        //( $ID.text (" ".join(arguments))
-        //( 0
-        //if the function name has been seen already
+
         Assignment2Semantics.handleFunctionDefinition($program::functionDefs, $ID.text, $arguments.args.size());
-    } block
+    } block { $program::code.add(")");}
     ;
 
 /*
@@ -79,10 +86,17 @@ id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
     }
     ;
 
-block : 'BEGIN' {
-    //generate ( <blocknum>
+block locals [
+        int blockNum
+    ]
+    @init {
+
+        $blockNum = $function::currentBlock++; 
+
+    }: 'BEGIN' {
+        $program::code.add("(" + $blockNum);
     }  statements 'END' {
-        //generate )
+        $program::code.add(")");
     } ;
 
 statements : statement ';' statements
