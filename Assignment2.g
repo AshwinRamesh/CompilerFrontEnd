@@ -21,6 +21,11 @@ program
         HashMap<String, Integer> functionDefs = new HashMap<String, Integer>(),
         /* arraylist of pieces of intermediate code to be generated. To be joined into a string at the end */
         ArrayList<String> code = new ArrayList<String>(),
+        /* maps register number -> value stored in it */
+        HashMap<Integer, Integer> registerValue = new HashMap<Integer, Integer>(),
+        /* maps variable name -> register holding it */
+        HashMap<String, Integer> variableRegister= new HashMap<Integer, Integer>()
+        
     ]
     @after
     {
@@ -33,9 +38,9 @@ functions : function functions
     | ;
 
 function
-    /* symbols defined in this function */
     locals 
     [
+        /* symbols defined in this function */
         HashMap<String,Integer> symbols = new HashMap<String,Integer>(),
         int currentBlock = 0
         ArrayList<Block> blocks = new ArrayList<Block>();
@@ -43,12 +48,14 @@ function
     ]
     : 'FUNCTION' ID arguments[true] {
         $program::code.add( "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")");
-        
+        //Create a new block, numbered with 0 and with the register counter set to 0. we start with r0
+        $blocks.add(new Block(0, 0));
     }
     variables 
     {
-
         Assignment2Semantics.handleFunctionDefinition($program::functionDefs, $ID.text, $arguments.args.size());
+        
+        
     } block { $program::code.add(")");}
     ;
 
@@ -67,7 +74,10 @@ arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$
     }
     ;
 
-variables : 'VARS' id_list[false] ';'
+variables returns [ArrayList<String> vars]: 'VARS' id_list[false]  
+    {
+        $vars = $id_list.return_ids;
+    }';'
     | ;
 
 /*
