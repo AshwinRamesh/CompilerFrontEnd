@@ -20,15 +20,14 @@ program
         /* functionDefs = map of function names -> number of arguments */
         HashMap<String, Integer> functionDefs = new HashMap<String, Integer>(),
         /* arraylist of pieces of intermediate code to be generated. To be joined into a string at the end */
-        ArrayList<String> code = new ArrayList<String>(),
-        
+        ArrayList<String> code = new ArrayList<String>()
     ]
     @after
     {
         Assignment2Semantics.checkMainDefined($program::functionDefs);
         System.out.println(Assignment2Codegen.join($program::code, " ")); 
     }
-    : { $program::code.add("(");} functions {$program::code.add(")");};
+    : { Assignment2Codegen.populateOpMap(); $program::code.add("(");} functions {$program::code.add(")");};
 
 functions : function functions
     | ;
@@ -128,7 +127,7 @@ statement
     }
     ;
 
-expression returns [int value]
+expression returns [int value, int register]
     : NUM
     {
         $expression.value = $NUM.int;
@@ -137,6 +136,7 @@ expression returns [int value]
         int nextReg = block.getNextRegister(); // get the register this block is up to
         $function::registerValue.put(nextReg, $NUM.int); //save the value of the register
         block.addLC(nextReg, $NUM.int);
+        $expression.register = nextReg;
     }
     | ID
     {
@@ -148,6 +148,7 @@ expression returns [int value]
 
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
         $expression.value = $function::symbols.get($ID.text);
+        $expression.register = nextReg;
     }
     //Function application
     | ID arguments[false]
@@ -175,6 +176,7 @@ expression returns [int value]
         for (String arg: $arguments.args) {
             block.add(Assignment2Codegen.addR($function::variableRegister.get(arg)));
         }
+        block.add(")");
 
         //TODO The register holding the result of the call is in the 'reg' variable.
         //TODO What do we do with it?
@@ -182,18 +184,17 @@ expression returns [int value]
         //(call <storage register> <function name> <argument registers>)
         // TODO: Actually call the function
         $expression.value = 0;
+        $expression.register = reg;
     }
     | '(' left=expression OP right=expression ')'
     {
 
-        //For each of these, generate:
-        //(ld ra $left.value)
-        //(ld rb $right.value)
-        //(add/sub/mul/div/[le]/gt/cmp rx ra rb)
-        // rx now has the result of the expression
 
         Block block = $function::blocks.get($function::currentBlock);
-        //block.add("( ld" + Assignment2Codegen.addR(block.getNextRegister()) + //TODO Now what?
+        int nextReg = block.getNextRegister();
+        $expression.register = nextReg;
+        block.addBooleanOp($OP.text, nextReg, $left.register, $right.register);
+
         $expression.value = Assignment2Semantics.handleOperationExpression($OP.text, $left.value, $right.value);
     }
     ;

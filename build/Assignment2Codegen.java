@@ -1,12 +1,20 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 class Assignment2Codegen {
 
+    public static HashMap<String, String> opMap = new HashMap<String, String>();
 
+
+    public static void populateOpMap() {
+        String[] languageOps = {"+","-", "/","*", "<", ">", "=="};
+        String[] intermediateOps = {"add", "sub", "div", "mul", "le", "gt", "cmp"};
+        for (int i = 0; i < languageOps.length; i++) {
+            opMap.put(languageOps[i], intermediateOps[i]);
+        }
+    }
     //add the 'r' to a register number. 2 -> 'r2'
     public static String addR(int number) {
-
         return "r" + number;
-
     }
     //Returns a string with each element in the ArrayList seperated by the string sep
     //Similar to Python/JavaScript's join function
@@ -89,5 +97,15 @@ class Block {
     public String toString() {
         return Assignment2Codegen.join(code, " ");
     }
+
+    public void addBooleanOp(String op, int rStore, int r1, int r2){
+        code.add("(");
+        code.add(Assignment2Codegen.opMap.get(op));
+        code.add(Assignment2Codegen.addR(rStore));
+        code.add(Assignment2Codegen.addR(r1));
+        code.add(Assignment2Codegen.addR(r2));
+        code.add(")");
+    }
+
 
 }
