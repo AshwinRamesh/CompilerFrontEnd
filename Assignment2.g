@@ -21,8 +21,6 @@ program
         HashMap<String, Integer> functionDefs = new HashMap<String, Integer>(),
         /* arraylist of pieces of intermediate code to be generated. To be joined into a string at the end */
         ArrayList<String> code = new ArrayList<String>(),
-        /* functionBlocks = map of function name -> list of blocks in it */
-        HashMap<String, ArrayList<Block>> functionBlocks = new HashMap<String, ArrayList<Block>>();
     ]
     @after
     {
@@ -40,10 +38,12 @@ function
     [
         HashMap<String,Integer> symbols = new HashMap<String,Integer>(),
         int currentBlock = 0
+        ArrayList<Block> blocks = new ArrayList<Block>();
 
     ]
     : 'FUNCTION' ID arguments[true] {
         $program::code.add( "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")");
+        
     }
     variables 
     {
