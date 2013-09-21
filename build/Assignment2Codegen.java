@@ -2,6 +2,12 @@ import java.util.ArrayList;
 class Assignment2Codegen {
 
 
+    //add the 'r' to a register number. 2 -> 'r2'
+    public static String addR(int number) {
+
+        return "r" + number;
+
+    }
     //Returns a string with each element in the ArrayList seperated by the string sep
     //Similar to Python/JavaScript's join function
     public static String join(ArrayList<String> list, String sep) {
@@ -44,8 +50,40 @@ class Block {
         code.add(")");
     }
 
+    //Adds some code to the code in this block
+    public void add(String str) {
+        code.add(str);
+    }
+
+    public void addLoad(int register, String value) {
+        code.add("(");
+        code.add("ld");
+        code.add(Assignment2Codegen.addR(register));
+        code.add(value);
+        code.add(")");
+    }
+
+    public void addLC(int register, int constant) {
+        code.add("(");
+        code.add("lc");
+        code.add(Assignment2Codegen.addR(register));
+        code.add(Integer.toString(constant));
+        code.add(")");
+    }
+
+    public void addST(String variable, int register) {
+        code.add("(");
+        code.add("st");
+        code.add(variable);
+        code.add(Assignment2Codegen.addR(register));
+        code.add(")");
+    }
     public int getCurrentRegister() {
         return currentRegister;
+    }
+
+    public int getNextRegister() {
+        return currentRegister++;
     }
 
     public String toString() {

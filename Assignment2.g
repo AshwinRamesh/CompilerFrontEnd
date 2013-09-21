@@ -21,10 +21,6 @@ program
         HashMap<String, Integer> functionDefs = new HashMap<String, Integer>(),
         /* arraylist of pieces of intermediate code to be generated. To be joined into a string at the end */
         ArrayList<String> code = new ArrayList<String>(),
-        /* maps register number -> value stored in it */
-        HashMap<Integer, Integer> registerValue = new HashMap<Integer, Integer>(),
-        /* maps variable name -> register holding it */
-        HashMap<String, Integer> variableRegister= new HashMap<Integer, Integer>()
         
     ]
     @after
@@ -42,9 +38,12 @@ function
     [
         /* symbols defined in this function */
         HashMap<String,Integer> symbols = new HashMap<String,Integer>(),
-        int currentBlock = 0
-        ArrayList<Block> blocks = new ArrayList<Block>();
-
+        int currentBlock = 0,
+        ArrayList<Block> blocks = new ArrayList<Block>(),
+        /* maps register number -> value stored in it */
+        HashMap<Integer, Integer> registerValue = new HashMap<Integer, Integer>(),
+        /* maps variable name -> register holding it */
+        HashMap<String, Integer> variableRegister= new HashMap<String, Integer>()
     ]
     : 'FUNCTION' ID arguments[true] {
         $program::code.add( "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")");
@@ -54,9 +53,13 @@ function
     variables 
     {
         Assignment2Semantics.handleFunctionDefinition($program::functionDefs, $ID.text, $arguments.args.size());
-        
-        
-    } block { $program::code.add(")");}
+    } block 
+    { 
+        for (Block block : $blocks) {
+            $program::code.add(block.toString());
+        }
+        $program::code.add(")");
+    }
     ;
 
 /*
@@ -96,18 +99,10 @@ id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
     }
     ;
 
-block locals [
-        int blockNum
-    ]
-    @init {
-
-        $blockNum = $function::currentBlock++; 
-
-    }: 'BEGIN' {
-        $program::code.add("(" + $blockNum);
-    }  statements 'END' {
-        $program::code.add(")");
-    } ;
+block 
+    : 'BEGIN' 
+      statements 'END' 
+     ;
 
 statements : statement ';' statements
     | ;
@@ -137,13 +132,20 @@ expression returns [int value]
     : NUM
     {
         $expression.value = $NUM.int;
-        //generate
-        //(ld rx $expression.value)
+        Block block = $function::blocks.get($function::currentBlock);
+
+        int nextReg = block.getNextRegister(); // get the register this block is up to
+        $function::registerValue.put(nextReg, $NUM.int); //save the value of the register
+        block.addLC(nextReg, $NUM.int);
     }
     | ID
     {
         //generate:
         //(ld rx v)
+        Block block = $function::blocks.get($function::currentBlock);
+        int nextReg = block.getNextRegister();
+        block.addLoad(nextReg, $ID.text);
+
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
         $expression.value = $function::symbols.get($ID.text);
     }
@@ -151,7 +153,33 @@ expression returns [int value]
     | ID arguments[false]
     {
         Assignment2Semantics.handleCallExpression($program::functionDefs, $ID.text, $arguments.args.size());
-        
+
+
+        Block block = $function::blocks.get($function::currentBlock);
+
+        int reg;
+        //load all the variables used in the function arguments into registers
+        for ( String arg : $arguments.args) {
+            reg = block.getNextRegister();
+            block.addLoad(reg, arg);
+            //also map the variable to the register that holds it
+            $function::variableRegister.put(arg, reg);
+        }
+
+        block.add("( call");
+        reg = block.getNextRegister();
+        block.add(Assignment2Codegen.addR(reg));
+        block.add($ID.text);
+
+        //get the register that each variable is stored in and pass it as an argument to call
+        for (String arg: $arguments.args) {
+            block.add(Assignment2Codegen.addR($function::variableRegister.get(arg)));
+        }
+
+        //TODO The register holding the result of the call is in the 'reg' variable.
+        //TODO What do we do with it?
+
+        //(call <storage register> <function name> <argument registers>)
         // TODO: Actually call the function
         $expression.value = 0;
     }
@@ -163,6 +191,9 @@ expression returns [int value]
         //(ld rb $right.value)
         //(add/sub/mul/div/[le]/gt/cmp rx ra rb)
         // rx now has the result of the expression
+
+        Block block = $function::blocks.get($function::currentBlock);
+        //block.add("( ld" + Assignment2Codegen.addR(block.getNextRegister()) + //TODO Now what?
         $expression.value = Assignment2Semantics.handleOperationExpression($OP.text, $left.value, $right.value);
     }
     ;
