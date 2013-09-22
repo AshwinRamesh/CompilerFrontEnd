@@ -51,7 +51,7 @@ class Block {
         code = new ArrayList<String>();
         this.number = number;
         this.currentRegister = register;
-        code.add("(" + number);
+        code.add("(" + number + '\n');
     }
 
     public void endBlock() {
@@ -93,9 +93,12 @@ class Block {
     public int getNextRegister() {
         return currentRegister++;
     }
+    public int getNumber() {
+        return number;
+    }
 
     public String toString() {
-        return Assignment2Codegen.join(code, " ");
+        return Assignment2Codegen.join(code, " ") + '\n';
     }
 
     public void addBooleanOp(String op, int rStore, int r1, int r2){
@@ -104,6 +107,16 @@ class Block {
         code.add(Assignment2Codegen.addR(rStore));
         code.add(Assignment2Codegen.addR(r1));
         code.add(Assignment2Codegen.addR(r2));
+        code.add(")");
+    }
+
+    public void addBR(int register, int block1, int block2)
+    {
+        code.add("(");
+        code.add("br");
+        code.add(Assignment2Codegen.addR(register));
+        code.add(Integer.toString(block1));
+        code.add(Integer.toString(block2));
         code.add(")");
     }
 
