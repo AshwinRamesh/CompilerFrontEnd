@@ -28,7 +28,7 @@ public class Assignment2Semantics {
             if (checkOnly) {
                 checkSymbolDefined(funcSymbols, id);
             }
-            else if (funcSymbols.get(id) != null) {
+            else if (funcSymbols.containsKey(id)) {
                 throw new RuntimeException("Error: variable '"+id+"' redefined.");
             }
             else {
@@ -38,7 +38,7 @@ public class Assignment2Semantics {
     }
     
     public static void handleAssignmentStatement(Map<String,Integer> funcSymbols, String id, Integer expr) {
-        if (funcSymbols.get(id) == null) {
+        if (!funcSymbols.containsKey(id)) {
             throw new RuntimeException("Error: variable '"+id+"' undefined.");
         }
         funcSymbols.put(id, expr);
