@@ -46,8 +46,8 @@ function
     ]
     : 'FUNCTION' ID arguments[true] {
         $program::code.add( "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")");
-        //Create a new block, numbered with 0 and with the register counter set to 0. we start with r0
-        $blocks.add(new Block(0, 0));
+        //Create a new block, numbered with 0 and with the register counter set to 1. we start with r1
+        $blocks.add(new Block(0, 1));
     }
     variables 
     {
