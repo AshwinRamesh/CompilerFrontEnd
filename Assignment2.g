@@ -42,7 +42,7 @@ function
         boolean newBlockRequired = false
     ]
     : 'FUNCTION' ID arguments[true] {
-        $program::code.add( "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")");
+        $program::code.add( "\n\n" + "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")" + "\n");
     }
     variables 
     {
@@ -194,7 +194,7 @@ expression returns [int value, int register]
         for (String arg: $arguments.args) {
             block.add(Assignment2Codegen.addR($function::variableRegister.get(arg)));
         }
-        block.add(")");
+        block.add(") \n");
 
         //(call <storage register> <function name> <argument registers>)
         // TODO: Actually call the function
