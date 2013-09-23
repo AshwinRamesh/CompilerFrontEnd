@@ -128,8 +128,9 @@ statement
     } 'THEN' b1=block (el='ELSE' b2=block)?
     {
         int secondBranchBlock = $function::currentBlock + 1;
-        if ($el != null)
+        if ($el != null) {
             secondBranchBlock = $b2.basicBlock.getNumber();
+        }
         block.addBR(reg, $b1.basicBlock.getNumber(), secondBranchBlock);
         $function::newBlockRequired = true;
     }
