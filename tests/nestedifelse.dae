@@ -1,0 +1,31 @@
+FUNCTION dealwithit(a,b,c)
+    VARS d,e,f;
+    BEGIN
+        IF d THEN
+            BEGIN
+            IF e THEN
+                BEGIN
+                IF f THEN
+                    BEGIN
+                        d = 5;
+                    END
+                ELSE
+                    BEGIN
+                        d = 6;
+                    END;
+                e = (d == 6);
+                IF e THEN
+                    BEGIN
+                        e = 420;
+                    END;
+                END;
+            END;
+        f = 666;
+
+    END
+    
+FUNCTION main()
+    VARS a,b,c;
+    BEGIN
+        a = dealwithit(a,b ,c);
+    END

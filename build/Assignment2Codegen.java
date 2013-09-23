@@ -20,13 +20,18 @@ class Assignment2Codegen {
     //Similar to Python/JavaScript's join function
     public static String join(ArrayList<String> list, String sep) {
 
+        if (list.size() == 0) {
+            return "";
+        }
+
         StringBuilder sb = new StringBuilder();
         //loop to every element except the last one so we don't add the separator on the end
         for (int i = 0; i < list.size() - 1; i++)
         {
             sb.append(list.get(i) + sep);
         }
-        sb.append(list.get(list.size() - 1));
+
+        sb.append(list.get(list.size() -1 ));
 
         return sb.toString();
 
@@ -65,7 +70,7 @@ class Block {
         code.add(op);
         code.add(arg1);
         code.add(arg2);
-        code.add(")");
+        code.add(")" + '\n');
     }
 
     public void addInstruction(String op, String arg1, String arg2, String arg3)
@@ -75,7 +80,7 @@ class Block {
         code.add(arg1);
         code.add(arg2);
         code.add(arg3);
-        code.add(")");
+        code.add(")" + '\n');
     }
 
     public Block(int number, int register) {
@@ -112,7 +117,7 @@ class Block {
         code.add(Assignment2Codegen.addR(rStore));
         code.add(Assignment2Codegen.addR(r1));
         code.add(Assignment2Codegen.addR(r2));
-        code.add(")");
+        code.add(")" + '\n');
     }
 
     public void addBR(int register, int block1, int block2)

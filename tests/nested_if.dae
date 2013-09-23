@@ -1,0 +1,27 @@
+FUNCTION factorial(n)
+    VARS cond, tmp, tmp2;
+    BEGIN
+        tmp2 = 1;
+        cond = (n == 0);
+        IF cond THEN
+            BEGIN
+                IF tmp2 THEN
+                    BEGIN
+                        tmp2 = 420;
+                    END;
+                tmp = 1;
+                RETURN tmp;
+            END
+        ELSE
+            BEGIN
+                tmp = (n - 1);
+                tmp = (factorial(tmp) * n);
+                RETURN tmp;
+            END;
+    END
+FUNCTION main(n)
+    VARS tmp;
+    BEGIN
+        tmp = factorial(n);
+        RETURN tmp;
+    END
