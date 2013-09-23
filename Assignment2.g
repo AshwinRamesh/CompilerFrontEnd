@@ -119,7 +119,7 @@ statement
         Block block = $function::blocks.get($function::currentBlock);
         int reg = block.getNextRegister();
         //load the register we'll be branching on
-        block.addLC(reg, $ID.text);
+        block.addLD(reg, $ID.text);
     } 'THEN' block 
     { 
         //TODO: is this a hack? 'block' refers to the variable 'block' from the last called statement....
@@ -134,7 +134,7 @@ statement
     {
         Block block = $function::blocks.get($function::currentBlock);
         int reg = block.getNextRegister();
-        block.addLC(reg, $ID.text);
+        block.addLD(reg, $ID.text);
         block.add("( ret");
         block.add(Assignment2Codegen.addR(reg));
         block.add(")");
@@ -160,7 +160,7 @@ expression returns [int value, int register]
 
         Block block = $function::blocks.get($function::currentBlock);
         int nextReg = block.getNextRegister();
-        block.addLC(nextReg, $ID.text);
+        block.addLD(nextReg, $ID.text);
 
         $function::variableRegister.put($ID.text, nextReg);
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
@@ -179,7 +179,7 @@ expression returns [int value, int register]
         //load all the variables used in the function arguments into registers
         for ( String arg : $arguments.args) {
             reg = block.getNextRegister();
-            block.addLC(reg, arg);
+            block.addLD(reg, arg);
             //also map the variable to the register that holds it
             $function::variableRegister.put(arg, reg);
         }

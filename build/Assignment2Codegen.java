@@ -48,7 +48,7 @@ class Block {
         code.add("(");
     }
 
-    public addInstruction(String op, String arg1, String arg2)
+    public void addInstruction(String op, String arg1, String arg2)
     {
         code.add("(");
         code.add(op);
@@ -57,7 +57,7 @@ class Block {
         code.add(")");
     }
 
-    public addInstruction(String op, String arg1, String arg2, String arg3)
+    public void addInstruction(String op, String arg1, String arg2, String arg3)
     {
         code.add("(");
         code.add(op);
@@ -83,7 +83,7 @@ class Block {
         code.add(str);
     }
 
-    public void addLC(int register, String value) {
+    public void addLD(int register, String value) {
         addInstruction("ld", Assignment2Codegen.addR(register), value);
     }
 
