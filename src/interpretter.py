@@ -105,32 +105,24 @@ def main():
         process_program(sys.argv[2:])
     except IOError:
         print "Error: File does not exist. Cannot execute."
-        exit(1)
     except FileNotGivenException as e:
         print "Error: No input file given. Cannot execute."
-        exit(1)
     except FunctionUndefinedException as e:
         print "Error: Function name '%s' is undefined." %(e.value)
-        exit(1)
     except VariableUndefinedException as e:
         print "Error: Variable '%s' is undefined." %(e.value)
-        exit(1)
     except RegisterUndefinedException as e:
         print "Error: Register '%s' is undefined." %(e.value)
-        exit(1)
     except FunctionArgMismatchException as e:
         print "Error: Function '%s' requires %d argument(s), but %d given." %(e.function, e.required, e.given)
-        exit(1)
     except UndefinedIntermediateCodeException as e:
         print "Error: Intermediate function '%s' in function '%s' on block %d is undefined." %(e.instruction, e.function, e.block)
-        exit(1)
     except BlockUndefinedException as e:
         print "Error: Block %d does not exist in function '%s'." %(e.block, e.function)
-        exit(1)
     except IndexError:
         print "Error: Corrupted intermediate file. Cannot execute."
+    finally:
         exit(1)
-
 
 if __name__ == "__main__":
     main()
