@@ -35,7 +35,6 @@ class Assignment2Codegen {
 
 }
 
-
 class Block {
 
     private ArrayList<String> code;

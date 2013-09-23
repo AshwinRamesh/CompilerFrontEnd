@@ -1,5 +1,6 @@
 //TODO: Deal with the ambiguous IF ID THEN IF ID THEN BLOCK ELSE BLOCK //which if does the else go to? 
 //TODO: Need to end the block on seeing a (ret) call
+//TODO: Do we actually need to end on seeing a ret call? The language allows it
 
 grammar Assignment2;
 
@@ -48,7 +49,8 @@ function
     } block 
     { 
         for (Block block : $blocks) {
-            $program::code.add(block.toString() + ")");
+            block.endBlock();
+            $program::code.add(block.toString());
         }
         $program::code.add(")");
     }
@@ -122,8 +124,11 @@ statement
         block.addLD(reg, $ID.text);
     } 'THEN' block 
     { 
-        //TODO: is this a hack? 'block' refers to the variable 'block' from the last called statement....
+        //TODO: is this a hack? 'block' refers to the variable 'block' from the last called statement.... (I think)
         int ifBodyBlockNumber = $function::blocks.get($function::currentBlock).getNumber();
+        //the "block" variable refers to the block BEFORE the IF statement
+
+        //TODO: get the block location of AFTER the IF
         block.addBR(reg, ifBodyBlockNumber, ifBodyBlockNumber + 1);
     }
     ('ELSE' block {} )? 
@@ -171,10 +176,7 @@ expression returns [int value, int register]
     | ID arguments[false]
     {
         Assignment2Semantics.handleCallExpression($program::functionDefs, $ID.text, $arguments.args.size());
-
-
         Block block = $function::blocks.get($function::currentBlock);
-
         int reg;
         //load all the variables used in the function arguments into registers
         for ( String arg : $arguments.args) {
