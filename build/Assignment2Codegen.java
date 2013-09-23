@@ -35,6 +35,7 @@ class Assignment2Codegen {
 
 }
 
+
 class Block {
 
     private ArrayList<String> code;
@@ -45,6 +46,25 @@ class Block {
     public Block() {
         code = new ArrayList<String>();
         code.add("(");
+    }
+
+    public addInstruction(String op, String arg1, String arg2)
+    {
+        code.add("(");
+        code.add(op);
+        code.add(arg1);
+        code.add(arg2);
+        code.add(")");
+    }
+
+    public addInstruction(String op, String arg1, String arg2, String arg3)
+    {
+        code.add("(");
+        code.add(op);
+        code.add(arg1);
+        code.add(arg2);
+        code.add(arg3);
+        code.add(")");
     }
 
     public Block(int number, int register) {
@@ -63,29 +83,32 @@ class Block {
         code.add(str);
     }
 
-    public void addLoad(int register, String value) {
-        code.add("(");
-        code.add("ld");
-        code.add(Assignment2Codegen.addR(register));
-        code.add(value);
-        code.add(")");
+    public void addLC(int register, String value) {
+        addInstruction("ld", Assignment2Codegen.addR(register), value);
     }
 
     public void addLC(int register, int constant) {
-        code.add("(");
-        code.add("lc");
-        code.add(Assignment2Codegen.addR(register));
-        code.add(Integer.toString(constant));
-        code.add(")");
+        addInstruction("lc", Assignment2Codegen.addR(register), Integer.toString(constant));
     }
 
     public void addST(String variable, int register) {
+        addInstruction("st", variable, Assignment2Codegen.addR(register));
+    }
+
+    public void addBooleanOp(String op, int rStore, int r1, int r2){
         code.add("(");
-        code.add("st");
-        code.add(variable);
-        code.add(Assignment2Codegen.addR(register));
+        code.add(Assignment2Codegen.opMap.get(op));
+        code.add(Assignment2Codegen.addR(rStore));
+        code.add(Assignment2Codegen.addR(r1));
+        code.add(Assignment2Codegen.addR(r2));
         code.add(")");
     }
+
+    public void addBR(int register, int block1, int block2)
+    {
+        addInstruction("br", Assignment2Codegen.addR(register), Integer.toString(block1), Integer.toString(block2));
+    }
+
     public int getCurrentRegister() {
         return currentRegister;
     }
@@ -100,25 +123,5 @@ class Block {
     public String toString() {
         return Assignment2Codegen.join(code, " ") + '\n';
     }
-
-    public void addBooleanOp(String op, int rStore, int r1, int r2){
-        code.add("(");
-        code.add(Assignment2Codegen.opMap.get(op));
-        code.add(Assignment2Codegen.addR(rStore));
-        code.add(Assignment2Codegen.addR(r1));
-        code.add(Assignment2Codegen.addR(r2));
-        code.add(")");
-    }
-
-    public void addBR(int register, int block1, int block2)
-    {
-        code.add("(");
-        code.add("br");
-        code.add(Assignment2Codegen.addR(register));
-        code.add(Integer.toString(block1));
-        code.add(Integer.toString(block2));
-        code.add(")");
-    }
-
 
 }

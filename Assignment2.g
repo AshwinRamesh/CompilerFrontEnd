@@ -1,5 +1,5 @@
 //TODO: Deal with the ambiguous IF ID THEN IF ID THEN BLOCK ELSE BLOCK //which if does the else go to? 
-
+//TODO: Need to end the block on seeing a (ret) call
 
 grammar Assignment2;
 
@@ -48,7 +48,7 @@ function
     } block 
     { 
         for (Block block : $blocks) {
-            $program::code.add(block.toString());
+            $program::code.add(block.toString() + ")");
         }
         $program::code.add(")");
     }
@@ -103,7 +103,6 @@ block returns [Block basicBlock]: 'BEGIN'
         $function::blocks.add($basicBlock);
     } statements 'END'
      ;
-
 statements : statement ';' statements
     | ;
 
@@ -112,38 +111,44 @@ statement
     {
         Block block = $function::blocks.get($function::currentBlock);
         block.addST($ID.text, $expression.register);
-        System.out.println("added" + $ID.text);
+        System.out.println("added " + $ID.text);
         System.out.println($function::variableRegister.toString());
         $function::variableRegister.put($ID.text, $expression.register);
         Assignment2Semantics.handleAssignmentStatement($function::symbols, $ID.text, $expression.value);
     }
-    | 'IF' ID 'THEN'
+    | 'IF' ID
     {
         Block block = $function::blocks.get($function::currentBlock);
         //break on ID. If it's true, go the the block after the THEN, else go after the IF, which *should* be the next block numerically
-        //TODO uncomment this when variableRegister actually works
-        System.out.println("asking for" + $ID.text);
+        System.out.println("asking for " + $ID.text);
         System.out.println($function::variableRegister.toString());
         System.out.println($block::basicBlock);
 
         //add (ld rx ID)
         int reg = block.getNextRegister();
         //load the register we'll be branching on
-        block.addLoad(reg, $ID.text);
-        block.addBR(reg, $block::basicBlock.getNumber(), block.getNumber() + 1);
-    } block ('ELSE' block {} )? 
+        block.addLC(reg, $ID.text);
+    } 'THEN' block 
+    { 
+        //TODO: is this a hack? 'block' refers to the variable 'block' from the last called statement....
+        int ifBodyBlockNumber = $function::blocks.get($function::currentBlock).getNumber();
+        block.addBR(reg, ifBodyBlockNumber, ifBodyBlockNumber + 1);
+    }
+        ('ELSE' block {} )? 
     {
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
     }
     | 'RETURN' ID
     {
-        // TODO: uncomment this when every variable is actually mapped to a register
         Block block = $function::blocks.get($function::currentBlock);
+        int reg = block.getNextRegister();
+        block.addLC(reg, $ID.text);
         block.add("( ret");
-        System.out.println("asking for" + $ID.text);
+        System.out.println("asking for " + $ID.text);
         System.out.println($function::variableRegister.toString());
-        block.add(Assignment2Codegen.addR($function::variableRegister.get($ID.text)));
+        block.add(Assignment2Codegen.addR(reg));
         block.add(")");
+
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
     }
     ;
@@ -164,9 +169,9 @@ expression returns [int value, int register]
 
         Block block = $function::blocks.get($function::currentBlock);
         int nextReg = block.getNextRegister();
-        block.addLoad(nextReg, $ID.text);
+        block.addLC(nextReg, $ID.text);
 
-        System.out.println("adding" + $ID.text);
+        System.out.println("adding " + $ID.text);
         System.out.println($function::variableRegister.toString());
         $function::variableRegister.put($ID.text, nextReg);
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
@@ -185,10 +190,9 @@ expression returns [int value, int register]
         //load all the variables used in the function arguments into registers
         for ( String arg : $arguments.args) {
             reg = block.getNextRegister();
-            block.addLoad(reg, arg);
+            block.addLC(reg, arg);
             //also map the variable to the register that holds it
-
-            System.out.println("adding" + arg);
+            System.out.println("adding " + arg);
             System.out.println($function::variableRegister.toString());
             $function::variableRegister.put(arg, reg);
         }
@@ -200,7 +204,7 @@ expression returns [int value, int register]
 
         //get the register that each variable is stored in and pass it as an argument to call
         for (String arg: $arguments.args) {
-            System.out.println("asking for" + arg);
+            System.out.println("asking for " + arg);
             System.out.println($function::variableRegister.toString());
             block.add(Assignment2Codegen.addR($function::variableRegister.get(arg)));
         }
