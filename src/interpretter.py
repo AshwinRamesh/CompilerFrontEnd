@@ -80,7 +80,7 @@ def process_function(name, args, funcs=None):
         raise FunctionArgMismatchException(name, len(args), len(functions[name]["args"]))
 
     # Parse args and place in env
-    for i in range(0, len(args)):
+    for i in xrange(len(args)):
         env["variables"][function["args"][i]] = int(args[i])
 
     # Process blocks
@@ -119,10 +119,8 @@ def main():
         print "Error: Intermediate function '%s' in function '%s' on block %d is undefined." %(e.instruction, e.function, e.block)
     except BlockUndefinedException as e:
         print "Error: Block %d does not exist in function '%s'." %(e.block, e.function)
-    except IndexError:
+    except IndexError as e:
         print "Error: Corrupted intermediate file. Cannot execute."
-    finally:
-        exit(1)
 
 if __name__ == "__main__":
     main()
