@@ -32,6 +32,18 @@ class Assignment2Codegen {
 
     }
 
+    public static Block createBlock(ArrayList<Block> blocks, int currentBlock) {
+        Block b;
+        if (currentBlock == -1) {
+            b = new Block(0,1);
+        }
+        else {
+            int nextBlock = currentBlock + 1;
+            b = new Block(nextBlock, blocks.get(currentBlock).getNextRegister());
+        }
+        blocks.add(b);
+        return b;
+    }
 
 }
 

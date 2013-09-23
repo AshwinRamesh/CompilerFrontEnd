@@ -33,12 +33,13 @@ function
     [
         /* symbols defined in this function */
         HashMap<String,Integer> symbols = new HashMap<String,Integer>(),
-        int currentBlock = 0,
+        int currentBlock = -1,
         ArrayList<Block> blocks = new ArrayList<Block>(),
         /* maps register number -> value stored in it */
         HashMap<Integer, Integer> registerValue = new HashMap<Integer, Integer>(),
         /* maps variable name -> register holding it */
-        HashMap<String, Integer> variableRegister= new HashMap<String, Integer>()
+        HashMap<String, Integer> variableRegister= new HashMap<String, Integer>(),
+        boolean newBlockRequired = false
     ]
     : 'FUNCTION' ID arguments[true] {
         $program::code.add( "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")");
@@ -95,20 +96,20 @@ id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
 
 block returns [Block basicBlock]: 'BEGIN' 
     {
-        if ($function::blocks.size() == 0) {
-            $basicBlock = new Block(0,0);
-        }
-        else {
-            $basicBlock = new Block($function::currentBlock + 1 , $function::blocks.get($function::currentBlock).getNextRegister());
-            $function::currentBlock++;
-        }
-        $function::blocks.add($basicBlock);
+        $basicBlock = Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++);
     } statements 'END'
-     ;
+    ;
 statements : statement ';' statements
     | ;
 
-statement 
+statement
+    @init
+    {
+        if ($function::newBlockRequired) {
+            $function::newBlockRequired = false;
+            Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++);
+        }
+    }
     : ID '=' expression
     {
         Block block = $function::blocks.get($function::currentBlock);
@@ -118,22 +119,19 @@ statement
     }
     | 'IF' ID
     {
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
+
         Block block = $function::blocks.get($function::currentBlock);
         int reg = block.getNextRegister();
         //load the register we'll be branching on
         block.addLD(reg, $ID.text);
-    } 'THEN' block 
-    { 
-        //TODO: is this a hack? 'block' refers to the variable 'block' from the last called statement.... (I think)
-        int ifBodyBlockNumber = $function::blocks.get($function::currentBlock).getNumber();
-        //the "block" variable refers to the block BEFORE the IF statement
-
-        //TODO: get the block location of AFTER the IF
-        block.addBR(reg, ifBodyBlockNumber, ifBodyBlockNumber + 1);
-    }
-    ('ELSE' block {} )? 
+    } 'THEN' b1=block (el='ELSE' b2=block)?
     {
-        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
+        int secondBranchBlock = $function::currentBlock + 1;
+        if ($el != null)
+            secondBranchBlock = $b2.basicBlock.getNumber();
+        block.addBR(reg, $b1.basicBlock.getNumber(), secondBranchBlock);
+        $function::newBlockRequired = true;
     }
     | 'RETURN' ID
     {
