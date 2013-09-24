@@ -37,14 +37,23 @@ function
         HashMap<Integer, Integer> registerValue = new HashMap<Integer, Integer>(),
         /* maps variable name -> register holding it */
         HashMap<String, Integer> variableRegister= new HashMap<String, Integer>(),
-        boolean newBlockRequired = false
+        boolean newBlockRequired = false,
+        ArrayList<Block> fixmeBlocks = new ArrayList<Block>()
     ]
     @after
     {
         if ($function::newBlockRequired) {
-            Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++);
+            Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++, null);
         }
-
+        
+        for (Block b : $fixmeBlocks) {
+            if (b.getParent() != null) {
+                int brReg = b.getNextRegister();
+                b.addLC(brReg, 1);
+                b.addBR(brReg, b.getParent().getBiggestSubBlock()+1, 0);
+                System.out.println("Fixed block #"+b.getNumber()+", its parent block is #"+b.getParent().getNumber()+"; parent's biggest sub block: "+b.getParent().getBiggestSubBlock());
+            }
+        }
 
         for (Block block : $blocks) {
             block.endBlock();
@@ -59,7 +68,7 @@ function
     variables 
     {
         Assignment2Semantics.handleFunctionDefinition($program::functionDefs, $ID.text, $arguments.args.size());
-    } block 
+    } block[null]
     ;
 
 /*
@@ -99,9 +108,9 @@ id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
     }
     ;
 
-block returns [Block basicBlock]: 'BEGIN' 
+block[Block blParent] returns [Block basicBlock]: 'BEGIN' 
     {
-        $basicBlock = Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++);
+        $basicBlock = Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++, blParent);
     } statements 'END'
     ;
 statements : statement ';' statements
@@ -112,7 +121,8 @@ statement
     {
         if ($function::newBlockRequired) {
             $function::newBlockRequired = false;
-            Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++);
+            Block b = Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++, $block::basicBlock.getParent());
+            $function::fixmeBlocks.add(b);
         }
     }
     : ID '=' expression
@@ -129,7 +139,7 @@ statement
         int reg = block.getNextRegister();
         //load the register we'll be branching on
         block.addLD(reg, $ID.text);
-    } 'THEN' b1=block (el='ELSE' b2=block)?
+    } 'THEN' b1=block[$block::basicBlock] (el='ELSE' b2=block[$block::basicBlock])?
     {
         int secondBranchBlock = $function::currentBlock + 1;
         /* I couldn't do just b2 != null - don't ask me why, ask antlr. */

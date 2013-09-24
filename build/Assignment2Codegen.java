@@ -37,14 +37,14 @@ class Assignment2Codegen {
 
     }
 
-    public static Block createBlock(ArrayList<Block> blocks, int currentBlock) {
+    public static Block createBlock(ArrayList<Block> blocks, int currentBlock, Block parent) {
         Block b;
         if (currentBlock == -1) {
-            b = new Block(0,1);
+            b = new Block(0,1,parent);
         }
         else {
             int nextBlock = currentBlock + 1;
-            b = new Block(nextBlock, blocks.get(currentBlock).getNextRegister());
+            b = new Block(nextBlock, blocks.get(currentBlock).getNextRegister(), parent);
         }
         blocks.add(b);
         return b;
@@ -57,6 +57,8 @@ class Block {
     private ArrayList<String> code;
     private int number;
     private int currentRegister;
+    private Block parent;
+    private int biggestSubBlock;
 
     // Used to create an empty block, in case we need to do that.
     public Block() {
@@ -83,11 +85,22 @@ class Block {
         code.add(")" + '\n');
     }
 
-    public Block(int number, int register) {
+    public Block(int number, int register, Block parent) {
         code = new ArrayList<String>();
         this.number = number;
         this.currentRegister = register;
+        this.parent = parent;
+        this.biggestSubBlock = number;
+        if (parent != null) {
+            parent.updateBiggestSubBlock(number);
+        }
         code.add("(" + number + '\n');
+    }
+    
+    public void updateBiggestSubBlock(int n) {
+        if (n > biggestSubBlock) {
+            biggestSubBlock = n;
+        }
     }
 
     public void endBlock() {
@@ -134,6 +147,14 @@ class Block {
     }
     public int getNumber() {
         return number;
+    }
+    
+    public Block getParent() {
+        return parent;
+    }
+    
+    public int getBiggestSubBlock() {
+        return biggestSubBlock;
     }
 
     public String toString() {
