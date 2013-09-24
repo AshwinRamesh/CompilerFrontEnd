@@ -44,6 +44,8 @@ function
         if ($function::newBlockRequired) {
             Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++);
         }
+
+
         for (Block block : $blocks) {
             block.endBlock();
             $program::code.add(block.toString());
@@ -123,7 +125,6 @@ statement
     | 'IF' ID
     {
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
-
         Block block = $function::blocks.get($function::currentBlock);
         int reg = block.getNextRegister();
         //load the register we'll be branching on

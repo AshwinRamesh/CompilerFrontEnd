@@ -18,6 +18,7 @@ BEGIN
             BEGIN
                 e = 420;
             END;
+            d = 607;
         END
         ELSE
         BEGIN
