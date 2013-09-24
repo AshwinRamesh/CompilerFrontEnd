@@ -80,4 +80,5 @@ def process_file(file_name):
     # read file
     with open(file_name, 'rU') as content_file:
         content = content_file.read()
+    print parse(content)
     return parse(content)

@@ -1,6 +1,4 @@
 //TODO: Deal with the ambiguous IF ID THEN IF ID THEN BLOCK ELSE BLOCK //which if does the else go to? 
-//TODO: Need to end the block on seeing a (ret) call
-//TODO: Do we actually need to end on seeing a ret call? The language allows it
 
 grammar Assignment2;
 
@@ -41,20 +39,25 @@ function
         HashMap<String, Integer> variableRegister= new HashMap<String, Integer>(),
         boolean newBlockRequired = false
     ]
-    : 'FUNCTION' ID arguments[true] {
-        $program::code.add( "\n\n" + "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")" + "\n");
-    }
-    variables 
+    @after
     {
-        Assignment2Semantics.handleFunctionDefinition($program::functionDefs, $ID.text, $arguments.args.size());
-    } block 
-    { 
+        if ($function::newBlockRequired) {
+            Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++);
+        }
         for (Block block : $blocks) {
             block.endBlock();
             $program::code.add(block.toString());
         }
         $program::code.add(")");
+
     }
+    : 'FUNCTION' ID arguments[true] {
+        $program::code.add( "(" + $ID.text + "(" + Assignment2Codegen.join($arguments.args, " ") + ")" + "\n");
+    }
+    variables 
+    {
+        Assignment2Semantics.handleFunctionDefinition($program::functionDefs, $ID.text, $arguments.args.size());
+    } block 
     ;
 
 /*
@@ -128,6 +131,7 @@ statement
     } 'THEN' b1=block (el='ELSE' b2=block)?
     {
         int secondBranchBlock = $function::currentBlock + 1;
+        /* I couldn't do just b2 != null - don't ask me why, ask antlr. */
         if ($el != null) {
             secondBranchBlock = $b2.basicBlock.getNumber();
         }
@@ -143,7 +147,6 @@ statement
         block.add(Assignment2Codegen.addR(reg));
         block.add(")");
 
-        //TODO need to make sure the block is ended when we return a register
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
     }
     ;

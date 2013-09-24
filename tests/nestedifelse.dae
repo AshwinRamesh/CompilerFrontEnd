@@ -1,29 +1,32 @@
 FUNCTION dealwithit(a,b,c)
-    VARS d,e,f;
+VARS d,e,f,g;
+BEGIN
+    IF d THEN
     BEGIN
-        IF d THEN
+        IF e THEN
+        BEGIN
+            IF f THEN
             BEGIN
-            IF e THEN
-                BEGIN
-                IF f THEN
-                    BEGIN
-                        d = 5;
-                    END
-                ELSE
-                    BEGIN
-                        d = 6;
-                    END;
-                e = (d == 6);
-                IF e THEN
-                    BEGIN
-                        e = 420;
-                    END;
-                END;
+                d = 5;
+            END
+            ELSE
+            BEGIN
+                d = 6;
             END;
-        f = 666;
+            e = (d == 6);
+            IF e THEN
+            BEGIN
+                e = 420;
+            END;
+        END
+        ELSE
+        BEGIN
+            g = 500;
+        END;
+    END;
+    f = 666;
+END
 
-    END
-    
 FUNCTION main()
     VARS a,b,c;
     BEGIN
