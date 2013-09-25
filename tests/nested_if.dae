@@ -1,9 +1,14 @@
 FUNCTION factorial(n)
-    VARS cond, tmp;
+    VARS cond, tmp, tmp2;
     BEGIN
+        tmp2 = 1;
         cond = (n == 0);
         IF cond THEN
             BEGIN
+                IF tmp2 THEN
+                    BEGIN
+                        tmp2 = 420;
+                    END;
                 tmp = 1;
                 RETURN tmp;
             END
