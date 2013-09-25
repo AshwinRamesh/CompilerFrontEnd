@@ -39,7 +39,7 @@ function
     locals 
     [
         // symbols defined in this function
-        HashMap<String,Integer> symbols = new HashMap<String,Integer>(),
+        ArrayList<String> symbols = new ArrayList<String>(),
         // the block we are upto in this function (-1 => no blocks made)
         int currentBlock = -1,
         // list of block objects in this function
@@ -129,7 +129,7 @@ statement
     }
     : ID '=' expression
     {
-        Assignment2Semantics.handleAssignmentStatement($function::symbols, $ID.text, $expression.value);
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
         Assignment2Codegen.addAssignmentStatement($function::blocks.get($function::currentBlock), $function::variableRegister,
                                                   $ID.text, $expression.register);
     }
@@ -162,10 +162,9 @@ statement
     }
     ;
 
-expression returns [int value, int register]
+expression returns [int register]
     : NUM
     {
-        $expression.value = $NUM.int;
         Block block = $function::blocks.get($function::currentBlock);
         int nextReg = block.getNextRegister(); // get the register this block is up to
         block.addLC(nextReg, $NUM.int);
@@ -179,7 +178,6 @@ expression returns [int value, int register]
         block.addLD(nextReg, $ID.text);
 
         $function::variableRegister.put($ID.text, nextReg);
-        $expression.value = $function::symbols.get($ID.text);
         $expression.register = nextReg;
     }
     | ID arguments[false]
@@ -207,12 +205,10 @@ expression returns [int value, int register]
         }
         block.add(") \n");
 
-        $expression.value = 0;
         $expression.register = reg;
     }
     | '(' left=expression OP right=expression ')'
     {
-        $expression.value = Assignment2Semantics.handleOperationExpression($OP.text, $left.value, $right.value);
         Block block = $function::blocks.get($function::currentBlock);
         int nextReg = block.getNextRegister();
         $expression.register = nextReg;
