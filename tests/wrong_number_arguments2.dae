@@ -1,10 +1,11 @@
 FUNCTION f()
+VARS x;
 BEGIN
-RETURN 1;
+RETURN x;
 END
 FUNCTION main(n)
 VARS a, b;
 BEGIN
-a = f(a);
+b = f(a);
 RETURN a;
 END
