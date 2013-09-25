@@ -90,11 +90,33 @@ class Assignment2Codegen {
         return reg;
     }
 
+    // Adds a load constant to load the specified value into new register
+    // Returns that new register
+    public static int addLoadConstant(Block currentBlock, int value) {
+        int reg = currentBlock.getNextRegister();
+        currentBlock.addLC(reg, value);
+        return reg;
+    }
+
     public static void addRet(Block currentBlock, String var) {
         int reg = addLoadVariable(currentBlock, var);
         currentBlock.add("( ret");
         currentBlock.add(addR(reg));
         currentBlock.add(")");
+    }
+
+    public static int addCall(Block currentBlock, String funcName, ArrayList<String> args, HashMap<String,Integer> variableRegister) {
+        currentBlock.add("( call");
+        int reg = currentBlock.getNextRegister();
+        currentBlock.add(Assignment2Codegen.addR(reg));
+        currentBlock.add(funcName);
+
+        //get the register that each variable is stored in and pass it as an argument to call
+        for (String arg : args) {
+            currentBlock.add(addR(variableRegister.get(arg)));
+        }
+        currentBlock.add(") \n");
+        return reg;
     }
 }
 

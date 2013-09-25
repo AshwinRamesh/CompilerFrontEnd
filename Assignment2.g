@@ -165,55 +165,39 @@ statement
 expression returns [int register]
     : NUM
     {
-        Block block = $function::blocks.get($function::currentBlock);
-        int nextReg = block.getNextRegister(); // get the register this block is up to
-        block.addLC(nextReg, $NUM.int);
-        $expression.register = nextReg;
+        $expression.register = Assignment2Codegen.addLoadConstant($function::blocks.get($function::currentBlock), $NUM.int);
     }
     | ID
     {
         Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
-        Block block = $function::blocks.get($function::currentBlock);
-        int nextReg = block.getNextRegister();
-        block.addLD(nextReg, $ID.text);
+        int nextReg = Assignment2Codegen.addLoadVariable($function::blocks.get($function::currentBlock), $ID.text);
 
+        // Store that this variable is kept in this register
         $function::variableRegister.put($ID.text, nextReg);
         $expression.register = nextReg;
     }
     | ID arguments[false]
     {
         Assignment2Semantics.handleCallExpression($program::functionDefs, $ID.text, $arguments.args.size());
+
         Block block = $function::blocks.get($function::currentBlock);
-        int reg;
         //load all the variables used in the function arguments into registers
-        for ( String arg : $arguments.args) {
-            reg = block.getNextRegister();
-            block.addLD(reg, arg);
+        for (String arg : $arguments.args) {
+            int varReg = Assignment2Codegen.addLoadVariable(block, arg);
             //also map the variable to the register that holds it
-            $function::variableRegister.put(arg, reg);
+            $function::variableRegister.put(arg, varReg);
         }
 
         //(call <storage register> <function name> <argument registers>)
-        block.add("( call");
-        reg = block.getNextRegister();
-        block.add(Assignment2Codegen.addR(reg));
-        block.add($ID.text);
-
-        //get the register that each variable is stored in and pass it as an argument to call
-        for (String arg: $arguments.args) {
-            block.add(Assignment2Codegen.addR($function::variableRegister.get(arg)));
-        }
-        block.add(") \n");
-
+        int reg = Assignment2Codegen.addCall(block, $ID.text, $arguments.args, $function::variableRegister); 
         $expression.register = reg;
     }
     | '(' left=expression OP right=expression ')'
     {
         Block block = $function::blocks.get($function::currentBlock);
         int nextReg = block.getNextRegister();
-        $expression.register = nextReg;
         block.addBooleanOp($OP.text, nextReg, $left.register, $right.register);
-
+        $expression.register = nextReg;
     }
     ;
 
