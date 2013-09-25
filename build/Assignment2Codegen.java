@@ -50,6 +50,52 @@ class Assignment2Codegen {
         return b;
     }
 
+    public static void fixBlocks(ArrayList<Block> blocks) {
+        for (Block b : blocks) {
+            if (b.getParent() != null) {
+                int brReg = b.getNextRegister();
+                b.addLC(brReg, 1);
+                b.addBR(brReg, b.getParent().getBiggestSubBlock()+1, 0);
+                System.out.println("Fixed block #"+b.getNumber()+", its parent block is #"+b.getParent().getNumber()+"; parent's biggest sub block: "+b.getParent().getBiggestSubBlock());
+            }
+        }
+
+    }
+
+    public static void closeFunction(ArrayList<Block> blocks, ArrayList<String> programCode) {
+        // Close each block and add to program
+        for (Block block : blocks) {
+            block.endBlock();
+            programCode.add(block.toString());
+        }
+
+        // Close the function
+        programCode.add(")");
+    }
+
+    public static void addFunctionHeader(ArrayList<String> programCode, String funcName, ArrayList<String> args) {
+        programCode.add("(" + funcName + "(" + join(args, " ") + ")" + "\n");
+    }
+
+    public static void addAssignmentStatement(Block currentBlock, HashMap<String,Integer> variableRegister, String var, int reg) {
+        currentBlock.addST(var, reg);
+        variableRegister.put(var, reg);
+    }
+
+    // Adds a load statement to load the specified var into new register
+    // Returns that new register
+    public static int addLoadVariable(Block currentBlock, String var) {
+        int reg = currentBlock.getNextRegister();
+        currentBlock.addLD(reg, var);
+        return reg;
+    }
+
+    public static void addRet(Block currentBlock, String var) {
+        int reg = addLoadVariable(currentBlock, var);
+        currentBlock.add("( ret");
+        currentBlock.add(addR(reg));
+        currentBlock.add(")");
+    }
 }
 
 class Block {
