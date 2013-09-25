@@ -56,7 +56,6 @@ class Assignment2Codegen {
                 int brReg = b.getNextRegister();
                 b.addLC(brReg, 1);
                 b.addBR(brReg, b.getParent().getBiggestSubBlock()+1, 0);
-                System.out.println("Fixed block #"+b.getNumber()+", its parent block is #"+b.getParent().getNumber()+"; parent's biggest sub block: "+b.getParent().getBiggestSubBlock());
             }
         }
 
