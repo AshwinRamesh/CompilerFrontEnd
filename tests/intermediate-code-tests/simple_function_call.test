@@ -1,0 +1,27 @@
+(
+	(confuse (a b)
+		(0
+			(ld r1 a)
+			(ld r2 b)
+			(add r3 r1 r2)
+			(call r4 multime r3 r1)
+			(ret r4)
+		)
+	)
+	(multime (a b)
+		(0
+			(ld r1 a)
+			(ld r2 b)
+			(mul r3 r1 r2)
+			(ret r3)
+		)
+	)
+	(main ()
+		(0
+			(lc r1 5)
+			(lc r2 6)
+			(call r3 confuse r1 r2)
+			(ret r3)
+		)
+	)
+)

@@ -1,5 +1,5 @@
 FUNCTION factorial(n)
-    VARS cond, tmp;
+    VARS cond, tmp, x;
     BEGIN
         cond = (n == 0);
         IF cond THEN
@@ -13,6 +13,8 @@ FUNCTION factorial(n)
                 tmp = (factorial(tmp) * n);
                 RETURN tmp;
             END;
+
+        x = 5;
     END
 FUNCTION main(n)
     VARS tmp;

@@ -1,0 +1,11 @@
+FUNCTION dealwithit(a,b,c)
+    BEGIN
+        a = (b * c);
+        b = (a + c);
+    END
+    
+FUNCTION main()
+    VARS a,b,c;
+    BEGIN
+        a = dealwithit(a,b ,c);
+    END

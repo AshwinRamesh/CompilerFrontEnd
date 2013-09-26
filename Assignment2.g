@@ -1,4 +1,5 @@
 grammar Assignment2;
+
 @parser::header
 {
     import java.util.HashMap;
@@ -8,14 +9,26 @@ grammar Assignment2;
 program
     locals
     [
-        ArrayList<String> functionNames = new ArrayList<String>(),
-        HashMap<String, Integer> numArguments = new HashMap<String, Integer>()
+        // functionDefs = map of function names -> number of arguments
+        HashMap<String, Integer> functionDefs = new HashMap<String, Integer>(),
+        // arraylist of pieces of intermediate code to be generated. To be joined into a string at the end
+        ArrayList<String> code = new ArrayList<String>()
     ]
+    @init
+    {
+        // utility necessary for handling expressions - maps '==' to 'cmp', etc.
+        Assignment2Codegen.populateOpMap();
+
+        // Program must start and end with bracket
+        $program::code.add("(");
+    }
     @after
     {
-        if (!$program::functionNames.contains("main")) {
-	    throw new RuntimeException("Error: No main function defined.");
-	}
+        Assignment2Semantics.checkMainDefined($program::functionDefs);
+
+        // Program must start and end with bracket
+        $program::code.add(")");
+        System.out.println(Assignment2Codegen.join($program::code, " ")); 
     }
     : functions;
 
@@ -23,38 +36,60 @@ functions : function functions
     | ;
 
 function
-    /* symbols defined in this function */
     locals 
     [
-        HashMap<String,Integer> symbols = new HashMap<String,Integer>()
+        // symbols defined in this function
+        ArrayList<String> symbols = new ArrayList<String>(),
+        // the block we are upto in this function (-1 => no blocks made)
+        int currentBlock = -1,
+        // list of block objects in this function
+        ArrayList<Block> blocks = new ArrayList<Block>(),
+        // maps variable name -> register holding it
+        HashMap<String, Integer> variableRegister= new HashMap<String, Integer>(),
+        // for if-then statements. the statement after if-then needs to be in a new block.
+        // so this variable is basically a flag saying "we just finished an if-then statement."
+        boolean newBlockRequired = false,
+        //
+        ArrayList<Block> fixmeBlocks = new ArrayList<Block>()
     ]
-    : 'FUNCTION' ID arguments[true] variables
+    @after
     {
-        //if the function name has been seen already
-        if ($program::functionNames.contains($ID.text)) {
-            throw new RuntimeException("Error: function '"+$ID.text+"' redefined.");
+        // Sometimes there is a new block required after we end a function
+        if ($function::newBlockRequired) {
+            Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++, null);
         }
-        else {
-            $program::functionNames.add($ID.text);
-        }
-        $program::numArguments.put($ID.text, $arguments.args.size());
-    } block
-    ;
+        
+        // Adds jumps
+        Assignment2Codegen.fixBlocks($fixmeBlocks);
+       
+        // Close blocks and function, add code to program
+        Assignment2Codegen.closeFunction($blocks, $program::code);
+    }
+    : 'FUNCTION' ID arguments[true] variables 
+    {
+        Assignment2Semantics.handleFunctionDefinition($program::functionDefs, $ID.text, $arguments.args.size());
+        Assignment2Codegen.addFunctionHeader($program::code, $ID.text, $arguments.args);
+    } block[null];
 
 /*
     isDeclaring: is this a declaration of arguments, or actually passing vars?
     This is sent to id_list to tell it whether we need to check only [passing]
     or insert these symbols to the function table [declaring].
  */
-arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')' {
-    $args = $id_list.return_ids;
-}
-    | '()' {
+arguments[boolean isDeclaring] returns [ArrayList<String> args] : '(' id_list[!$isDeclaring] ')'
+    {
+        $args = $id_list.return_ids;
+    }
+    | '()'
+    {
         $args = new ArrayList<String>();
     }
     ;
 
-variables : 'VARS' id_list[false] ';'
+variables returns [ArrayList<String> vars]: 'VARS' id_list[false]  
+    {
+        $vars = $id_list.return_ids;
+    } ';'
     | ;
 
 /*
@@ -63,110 +98,106 @@ variables : 'VARS' id_list[false] ';'
    Done when in expression: ID arguments;
 */
 id_list[boolean checkOnly] returns [ArrayList<String> return_ids]
-    @init {
+    @init
+    {
         $return_ids = new ArrayList<String>();
     }
-    : a=ID {$return_ids.add($a.text);} (',' b=ID{$return_ids.add($b.text);})* //I have NO IDEA how to format this
+    : a=ID {$return_ids.add($a.text);} (',' b=ID{$return_ids.add($b.text);})* 
     {
-
-        for(String id : $return_ids) {
-
-            if ($checkOnly) {
-                if ($function::symbols.get(id) == null) {
-
-                    throw new RuntimeException("Error: variable '"+id+"' undefined.");
-                }
-            }
-            else if ($function::symbols.get(id) != null) {
-                throw new RuntimeException("Error: variable '"+id+"' redefined.");
-            }
-            else {
-                $function::symbols.put(id, 0);
-            }
-
-        }
+        Assignment2Semantics.handleIDList($function::symbols, $return_ids, $checkOnly);
     }
     ;
 
-block : 'BEGIN' statements 'END' ;
-
+block[Block blParent] returns [Block basicBlock]: 'BEGIN' 
+    {
+        $basicBlock = Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++, blParent);
+    } statements 'END'
+    ;
 statements : statement ';' statements
     | ;
 
-statement 
+statement
+    @init
+    {
+        // We just came out of an if-then statement! The stuff after that has to be in its own block.
+        if ($function::newBlockRequired) {
+            $function::newBlockRequired = false;
+            Block b = Assignment2Codegen.createBlock($function::blocks, $function::currentBlock++, $block::basicBlock.getParent());
+            // This block will need to have an appropriate jump after it, though
+            $function::fixmeBlocks.add(b);
+        }
+    }
     : ID '=' expression
     {
-        if ($function::symbols.get($ID.text) == null) {
-            System.out.println($function::symbols.toString());
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined. MAXSWAG");
-	}
-	$function::symbols.put($ID.text, $expression.value);
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
+        Assignment2Codegen.addAssignmentStatement($function::blocks.get($function::currentBlock), $function::variableRegister,
+                                                  $ID.text, $expression.register);
     }
-    | 'IF' ID 'THEN' block ('ELSE' block)?
+    | 'IF' ID 'THEN'
     {
-        if ($function::symbols.get($ID.text) == null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
-	}
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
+        Block ifBlock = $function::blocks.get($function::currentBlock);
+        int ldReg = Assignment2Codegen.addLoadVariable(ifBlock, $ID.text);
+    } b1=block[$block::basicBlock] (el='ELSE' b2=block[$block::basicBlock])?
+    {
+        // Either we branch into the else
+        // Or we branch into the block after the if-then, which will be currentBlock+1.
+        // (because currentBlock has been updated by b1 and b2 already)
+        int secondBranchBlock = $function::currentBlock + 1;
+        // I couldn't do just b2 != null - don't ask me why, ask antlr.
+        if ($el != null) {
+            secondBranchBlock = $b2.basicBlock.getNumber();
+        }
+
+        // ifBlock and ldReg remain from above action
+        ifBlock.addBR(ldReg, $b1.basicBlock.getNumber(), secondBranchBlock);
+
+        // we finished an if-then: signify that the next statements should be in a new block
+        $function::newBlockRequired = true;
     }
     | 'RETURN' ID
     {
-    	if ($function::symbols.get($ID.text) == null) {
-            throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
-        }
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
+        Assignment2Codegen.addRet($function::blocks.get($function::currentBlock), $ID.text);
     }
     ;
 
-expression returns [int value]
+expression returns [int register]
     : NUM
     {
-        $expression.value = $NUM.int;
+        $expression.register = Assignment2Codegen.addLoadConstant($function::blocks.get($function::currentBlock), $NUM.int);
     }
     | ID
     {
-        Integer v = $function::symbols.get($ID.text);
-	if (v == null) {
-        throw new RuntimeException("Error: variable '"+$ID.text+"' undefined.");
-	}
-    $expression.value = v;
+        Assignment2Semantics.checkSymbolDefined($function::symbols, $ID.text);
+        int nextReg = Assignment2Codegen.addLoadVariable($function::blocks.get($function::currentBlock), $ID.text);
+
+        // Store that this variable is kept in this register
+        $function::variableRegister.put($ID.text, nextReg);
+        $expression.register = nextReg;
     }
     | ID arguments[false]
     {
-        if (!$program::functionNames.contains($ID.text)) {
-            throw new RuntimeException("Error: function '"+$ID.text+"' undefined.");
-	    }
-        
-	    if ($program::numArguments.get($ID.text) != $arguments.args.size()) {
-            throw new RuntimeException("Error: function '"+$ID.text+"' expects "+$program::numArguments.get($ID.text) +" arguments.");
+        Assignment2Semantics.handleCallExpression($program::functionDefs, $ID.text, $arguments.args.size());
+
+        Block block = $function::blocks.get($function::currentBlock);
+        //load all the variables used in the function arguments into registers
+        for (String arg : $arguments.args) {
+            int varReg = Assignment2Codegen.addLoadVariable(block, arg);
+            //also map the variable to the register that holds it
+            $function::variableRegister.put(arg, varReg);
         }
 
-	 
-	// TODO: check number of arguments match function definition
-	// TODO: compute value by calling the function (HOW??)
-
+        //(call <storage register> <function name> <argument registers>)
+        int reg = Assignment2Codegen.addCall(block, $ID.text, $arguments.args, $function::variableRegister); 
+        $expression.register = reg;
     }
     | '(' left=expression OP right=expression ')'
     {
-    	if ($OP.text.equals("+")) {
-	    $expression.value = $left.value+$right.value;
-	}
-	if ($OP.text.equals("-")) {
-            $expression.value = $left.value-$right.value;
-	}
-	if ($OP.text.equals("*")) {
-	    $expression.value = $left.value*$right.value;
-	}
-	if ($OP.text.equals("/")) {
-	    $expression.value = $left.value/$right.value;
-	}
-	if ($OP.text.equals("<")) {
-	    $expression.value = ($left.value<$right.value) ? 1 : 0;
-	}
-	if ($OP.text.equals(">")) {
-	    $expression.value = ($left.value>$right.value) ? 1 : 0;
-	}
-	if ($OP.text.equals("==")) {
-	    $expression.value = ($left.value==$right.value) ? 1 : 0; //YEAH OKAY
-	}
+        Block block = $function::blocks.get($function::currentBlock);
+        int nextReg = block.getNextRegister();
+        block.addBooleanOp($OP.text, nextReg, $left.register, $right.register);
+        $expression.register = nextReg;
     }
     ;
 
