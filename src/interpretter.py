@@ -27,10 +27,8 @@ def check_arg_length(function_args, params):
 def process_block(function, id, env):
     global functions
     block = functions[function]["blocks"][id]
-    last_instruction = None
     # Iterate instructions and execute
     for instruction in block:
-        last_instruction = instruction
         operation = instruction[0]
         args = instruction[1:]
         if operation == "lc":
@@ -64,12 +62,12 @@ def process_block(function, id, env):
         else:
             raise UndefinedIntermediateCodeException(function, id, operation)
     # Check if last instruction is non-return
-    if (last_instruction == None or (last_instruction[0] != "ret" and last_instruction[0] != "br")):
-        id = id + 1
+    id = id + 1
+    try:
         utils.blocks_exist(function, functions[function], [id])
         return process_block(function, id, env)
-    pass
-
+    except BlockUndefinedException:
+        pass
 
 
 ## Process a function ##
@@ -101,7 +99,9 @@ def process_program(args=[]):
     global functions
     if "main" not in functions.keys():
         raise MainUndefinedException("main")
-    print process_function("main", args) # Print the final result
+    result = process_function("main", args)
+    if result != None:
+        print(result)
 
 
 def main():
