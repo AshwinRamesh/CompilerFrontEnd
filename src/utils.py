@@ -19,6 +19,6 @@ def variables_exist(env, *args):
 def blocks_exist(name, function, args):
 	for arg in args:
 		if arg not in function["blocks"].keys():
-			print arg
 			raise BlockUndefinedException(name, arg)
+	return True
 
