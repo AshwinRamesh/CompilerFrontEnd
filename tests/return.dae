@@ -1,0 +1,18 @@
+FUNCTION dealwithit(a,b,c)
+    BEGIN
+        a = (b * c);
+        b = (a + c);
+        RETURN b;
+        c = 2;
+        a = (c == 2);
+        IF a THEN
+        BEGIN
+            RETURN c;
+        END;
+    END
+    
+FUNCTION main()
+    VARS a,b,c;
+    BEGIN
+        a = dealwithit(a,b ,c);
+    END
