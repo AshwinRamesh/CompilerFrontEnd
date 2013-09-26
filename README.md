@@ -5,6 +5,10 @@ Note
 ----
 This is assignment 2 for the COMP3109 course provided by the University of Sydney.
 
+Errata
+------
+We promise we actually know how to spell "interpreter.
+
 Contributors
 ------------
 
