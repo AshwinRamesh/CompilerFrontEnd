@@ -5,7 +5,7 @@
 if [ $# -ne 2 ]
   then
     echo "Wrong number of arguments!\n"
-    echo "Usage: ./compile.sh <input file path> <output file path>\n"
+    echo "Usage: ./run.sh <path to intermediate code file> <main function args>\n"
     exit 1
 fi
 
