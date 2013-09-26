@@ -22,5 +22,7 @@ Installation
 Usage
 -----
 
+	* Executing Intermediate Code: ./run.sh <intermediate-file> [args...]
+
 Testing
 -------
