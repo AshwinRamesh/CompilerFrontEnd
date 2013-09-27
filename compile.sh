@@ -14,8 +14,8 @@ export CLASSPATH=".:$PWD/build/:$CLASSPATH"
 
 alias antlr4="java -jar $PWD/antlr-4.1-complete.jar"
 alias grun='java org.antlr.v4.runtime.misc.TestRig'
-
-antlr4 Assignment2.g -o build;
+#aliases are hard
+java -jar $PWD/antlr-4.1-complete.jar Assignment2.g -o build;
 javac build/Assignment2*.java;
 
 java -cp build Assignment2  $1  > $2
